@@ -57,7 +57,7 @@
 ### Option 2: Run Locally
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/pwa-template-generator.git
+git clone https://github.com/MarkHays/pwa-template-generator.git
 cd pwa-template-generator
 
 # Install dependencies
@@ -236,21 +236,21 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ## 🐛 Issues & Support
 
 ### Reporting Issues
-- 🐛 **Bug Reports**: [Create an issue](https://github.com/yourusername/pwa-template-generator/issues/new?template=bug_report.md)
-- 💡 **Feature Requests**: [Request a feature](https://github.com/yourusername/pwa-template-generator/issues/new?template=feature_request.md)
-- 📖 **Documentation**: [Improve docs](https://github.com/yourusername/pwa-template-generator/issues/new?template=documentation.md)
+- 🐛 **Bug Reports**: [Create an issue](https://github.com/MarkHays/pwa-template-generator/issues/new?template=bug_report.md)
+- 💡 **Feature Requests**: [Request a feature](https://github.com/MarkHays/pwa-template-generator/issues/new?template=feature_request.md)
+- 📖 **Documentation**: [Improve docs](https://github.com/MarkHays/pwa-template-generator/issues/new?template=documentation.md)
 
 ### Troubleshooting
 - 📋 **Common Issues**: [Troubleshooting Guide](TROUBLESHOOTING.md)
 - 🛠️ **Setup Problems**: [Development Guide](docs/development.md)
-- 💬 **Community Help**: [Discussions](https://github.com/yourusername/pwa-template-generator/discussions)
+- 💬 **Community Help**: [Discussions](https://github.com/MarkHays/pwa-template-generator/discussions)
 
 ## 📈 Stats & Analytics
 
-![GitHub Stars](https://img.shields.io/github/stars/yourusername/pwa-template-generator?style=social)
-![GitHub Forks](https://img.shields.io/github/forks/yourusername/pwa-template-generator?style=social)
-![GitHub Issues](https://img.shields.io/github/issues/yourusername/pwa-template-generator)
-![GitHub Pull Requests](https://img.shields.io/github/issues-pr/yourusername/pwa-template-generator)
+![GitHub Stars](https://img.shields.io/github/stars/MarkHays/pwa-template-generator?style=social)
+![GitHub Forks](https://img.shields.io/github/forks/MarkHays/pwa-template-generator?style=social)
+![GitHub Issues](https://img.shields.io/github/issues/MarkHays/pwa-template-generator)
+![GitHub Pull Requests](https://img.shields.io/github/issues-pr/MarkHays/pwa-template-generator)
 
 ## 📄 License
 
@@ -258,7 +258,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## 👥 Team
 
-- **Mark Hays** - *Creator & Lead Developer* - [@markhays](https://github.com/markhays)
+- **Mark Hays** - *Creator & Lead Developer* - [@MarkHays](https://github.com/MarkHays)
 
 ## 🙏 Acknowledgments
 
@@ -271,8 +271,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 - 🌐 **Live Demo**: [pwa-template-generator.web.app](https://pwa-template-generator.web.app)
 - 📖 **Documentation**: [/docs](https://pwa-template-generator.web.app/docs)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/yourusername/pwa-template-generator/discussions)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/yourusername/pwa-template-generator/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/MarkHays/pwa-template-generator/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/MarkHays/pwa-template-generator/issues)
 - 📋 **Roadmap**: [ROADMAP.md](ROADMAP.md)
 
 ---
@@ -281,6 +281,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 **Made with ❤️ by developers, for developers**
 
-[⭐ Star this repo](https://github.com/yourusername/pwa-template-generator) • [🍴 Fork it](https://github.com/yourusername/pwa-template-generator/fork) • [📢 Share it](https://twitter.com/intent/tweet?text=Check%20out%20this%20amazing%20PWA%20Generator!&url=https://github.com/yourusername/pwa-template-generator)
+[⭐ Star this repo](https://github.com/MarkHays/pwa-template-generator) • [🍴 Fork it](https://github.com/MarkHays/pwa-template-generator/fork) • [📢 Share it](https://twitter.com/intent/tweet?text=Check%20out%20this%20amazing%20PWA%20Generator!&url=https://github.com/MarkHays/pwa-template-generator)
 
 </div>
