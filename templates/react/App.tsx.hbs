@@ -1,0 +1,221 @@
+import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ErrorBoundary } from 'react-error-boundary';
+{{#if analytics}}
+import { Analytics } from './services/analytics';
+{{/if}}
+{{#if performance}}
+import { trackWebVitals } from './utils/performance';
+{{/if}}
+import { LoadingSpinner } from './components/common/LoadingSpinner';
+import { ErrorFallback } from './components/common/ErrorFallback';
+import { Header } from './components/layout/Header';
+import { Footer } from './components/layout/Footer';
+{{#if features.includes "notifications"}}
+import { NotificationProvider } from './providers/NotificationProvider';
+{{/if}}
+{{#if features.includes "dark-mode"}}
+import { ThemeProvider } from './providers/ThemeProvider';
+{{/if}}
+import './styles/App.scss';
+
+// Lazy load pages for better performance
+const Home = lazy(() => import('./pages/Home'));
+const About = lazy(() => import('./pages/About'));
+const Services = lazy(() => import('./pages/Services'));
+const Contact = lazy(() => import('./pages/Contact'));
+{{#if features.includes "blog"}}
+const Blog = lazy(() => import('./pages/Blog'));
+{{/if}}
+{{#if features.includes "dashboard"}}
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+{{/if}}
+
+// Types
+interface AppProps {
+  className?: string;
+}
+
+interface AppState {
+  isOnline: boolean;
+  installPrompt: any;
+  isInstalled: boolean;
+}
+
+const App: React.FC<AppProps> = ({ className }) => {
+  const [appState, setAppState] = useState<AppState>({
+    isOnline: navigator.onLine,
+    installPrompt: null,
+    isInstalled: false
+  });
+
+  {{#if analytics}}
+  // Initialize analytics
+  useEffect(() => {
+    const analytics = new Analytics({
+      {{#each analytics}}
+      {{this}}: true,
+      {{/each}}
+    });
+
+    analytics.track('app_loaded', {
+      framework: '{{framework}}',
+      version: '{{version}}',
+      features: {{json features}},
+      timestamp: new Date().toISOString()
+    });
+  }, []);
+  {{/if}}
+
+  {{#if performance}}
+  // Performance monitoring
+  useEffect(() => {
+    trackWebVitals({
+      onCLS: (metric) => console.log('CLS:', metric),
+      onFID: (metric) => console.log('FID:', metric),
+      onFCP: (metric) => console.log('FCP:', metric),
+      onLCP: (metric) => console.log('LCP:', metric),
+      onTTFB: (metric) => console.log('TTFB:', metric),
+    });
+  }, []);
+  {{/if}}
+
+  // PWA install prompt handling
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setAppState(prev => ({ ...prev, installPrompt: e }));
+    };
+
+    const handleAppInstalled = () => {
+      setAppState(prev => ({ ...prev, isInstalled: true, installPrompt: null }));
+      {{#if analytics}}
+      analytics.track('pwa_installed');
+      {{/if}}
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  // Network status monitoring
+  useEffect(() => {
+    const handleOnline = () => {
+      setAppState(prev => ({ ...prev, isOnline: true }));
+      {{#if analytics}}
+      analytics.track('network_online');
+      {{/if}}
+    };
+
+    const handleOffline = () => {
+      setAppState(prev => ({ ...prev, isOnline: false }));
+      {{#if analytics}}
+      analytics.track('network_offline');
+      {{/if}}
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Error boundary handler
+  const handleError = (error: Error, errorInfo: any) => {
+    console.error('App Error:', error, errorInfo);
+    {{#if analytics}}
+    analytics.track('app_error', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack
+    });
+    {{/if}}
+  };
+
+  // Install PWA handler
+  const handleInstallClick = async () => {
+    if (appState.installPrompt) {
+      const result = await appState.installPrompt.prompt();
+      {{#if analytics}}
+      analytics.track('pwa_install_prompt_result', { outcome: result.outcome });
+      {{/if}}
+      setAppState(prev => ({ ...prev, installPrompt: null }));
+    }
+  };
+
+  const AppContent = () => (
+    <div className={`app ${className || ''} ${!appState.isOnline ? 'offline' : ''}`}>
+      <Header
+        isOnline={appState.isOnline}
+        canInstall={!!appState.installPrompt}
+        onInstallClick={handleInstallClick}
+      />
+
+      <main className="main-content" role="main">
+        {!appState.isOnline && (
+          <div className="offline-banner" role="banner">
+            <p>You're currently offline. Some features may be limited.</p>
+          </div>
+        )}
+
+        <Suspense fallback={<LoadingSpinner />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/contact" element={<Contact />} />
+            {{#if features.includes "blog"}}
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<Blog />} />
+            {{/if}}
+            {{#if features.includes "dashboard"}}
+            <Route path="/dashboard" element={<Dashboard />} />
+            {{/if}}
+            <Route path="*" element={
+              <div className="not-found">
+                <h1>404 - Page Not Found</h1>
+                <p>The page you're looking for doesn't exist.</p>
+              </div>
+            } />
+          </Routes>
+        </Suspense>
+      </main>
+
+      <Footer />
+    </div>
+  );
+
+  return (
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onError={handleError}
+      onReset={() => window.location.reload()}
+    >
+      <Router>
+        {{#if features.includes "notifications"}}
+        <NotificationProvider>
+        {{/if}}
+        {{#if features.includes "dark-mode"}}
+        <ThemeProvider>
+        {{/if}}
+          <AppContent />
+        {{#if features.includes "dark-mode"}}
+        </ThemeProvider>
+        {{/if}}
+        {{#if features.includes "notifications"}}
+        </NotificationProvider>
+        {{/if}}
+      </Router>
+    </ErrorBoundary>
+  );
+};
+
+export default App;

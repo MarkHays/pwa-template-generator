@@ -1,0 +1,217 @@
+/* Responsive Styles */
+
+/* These are additional responsive adjustments that aren't already covered in the component files */
+
+/* Extra Small devices (phones, 480px and down) */
+@media (max-width: $breakpoint-xs) {
+    .container {
+      padding-left: $spacing-sm;
+      padding-right: $spacing-sm;
+    }
+    
+    .btn {
+      padding: $spacing-xs $spacing-md;
+    }
+    
+    .section-header {
+      margin-bottom: $spacing-xl;
+      
+      h2 {
+        font-size: $font-size-xl;
+      }
+      
+      p {
+        font-size: $font-size-md;
+      }
+    }
+    
+    .hero-section {
+      .hero-content {
+        text-align: center;
+        
+        h1 {
+          font-size: $font-size-2xl;
+        }
+      }
+    }
+  }
+  
+  /* Small devices (tablets, 640px and down) */
+  @media (max-width: $breakpoint-sm) {
+    section {
+      padding: $spacing-2xl 0;
+    }
+    
+    .footer-content {
+      grid-template-columns: 1fr;
+    }
+    
+    .process-steps {
+      gap: $spacing-md;
+    }
+    
+    .business-info-grid {
+      gap: $spacing-lg;
+    }
+  }
+  
+  /* Medium devices (tablets, 768px and down) */
+  @media (max-width: $breakpoint-md) {
+    .site-header {
+      .logo {
+        font-size: $font-size-lg;
+      }
+    }
+    
+    .services-grid,
+    .gallery-grid,
+    .testimonials-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .services-grid {
+      @media (max-width: $breakpoint-sm) {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+  
+  /* Large devices (desktops, 1024px and down) */
+  @media (max-width: $breakpoint-lg) {
+    .container {
+      max-width: 960px;
+    }
+  }
+  
+  /* Print styles */
+  @media print {
+    .site-header,
+    .site-footer,
+    .hero-section {
+      display: none;
+    }
+    
+    main {
+      margin-top: 0;
+    }
+    
+    a {
+      text-decoration: underline;
+      color: $dark-color;
+    }
+    
+    .container {
+      max-width: 100%;
+      padding: 0;
+    }
+    
+    body {
+      font-size: 12pt;
+      line-height: 1.4;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      page-break-after: avoid;
+      page-break-inside: avoid;
+    }
+    
+    img {
+      max-width: 100% !important;
+      page-break-inside: avoid;
+    }
+    
+    p, h2, h3 {
+      orphans: 3;
+      widows: 3;
+    }
+  }
+  
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    body.dark-mode-support {
+      background-color: $dark-color;
+      color: $light-color;
+      
+      .site-header {
+        background-color: darken($dark-color, 3%);
+        
+        .logo a, .main-nav ul li a, .mobile-menu-toggle {
+          color: $light-color;
+        }
+      }
+      
+      .page-header {
+        background-color: darken($dark-color, 3%);
+      }
+      
+      .service-card, .testimonial-card {
+        background-color: lighten($dark-color, 5%);
+        color: $light-color;
+      }
+      
+      h1, h2, h3, h4, h5, h6 {
+        color: $light-color;
+      }
+      
+      .form-group {
+        input, textarea, select {
+          background-color: lighten($dark-color, 10%);
+          border-color: lighten($dark-color, 20%);
+          color: $light-color;
+        }
+      }
+    }
+  }
+  
+  /* Utility classes for responsive display */
+  .hide-xs {
+    @media (max-width: $breakpoint-xs) {
+      display: none !important;
+    }
+  }
+  
+  .hide-sm {
+    @media (max-width: $breakpoint-sm) {
+      display: none !important;
+    }
+  }
+  
+  .hide-md {
+    @media (max-width: $breakpoint-md) {
+      display: none !important;
+    }
+  }
+  
+  .hide-lg {
+    @media (max-width: $breakpoint-lg) {
+      display: none !important;
+    }
+  }
+  
+  .show-xs {
+    display: none !important;
+    @media (max-width: $breakpoint-xs) {
+      display: block !important;
+    }
+  }
+  
+  .show-sm {
+    display: none !important;
+    @media (max-width: $breakpoint-sm) {
+      display: block !important;
+    }
+  }
+  
+  .show-md {
+    display: none !important;
+    @media (max-width: $breakpoint-md) {
+      display: block !important;
+    }
+  }
+  
+  .show-lg {
+    display: none !important;
+    @media (max-width: $breakpoint-lg) {
+      display: block !important;
+    }
+  }

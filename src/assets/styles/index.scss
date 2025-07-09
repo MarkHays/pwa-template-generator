@@ -1,0 +1,21 @@
+/* Main Styles - This is the primary stylesheet that imports all partials */
+
+/* First import variables so they're available to all other files */
+@import 'variables';
+
+/* Then import the reset to normalize browser styles */
+@import 'reset';
+
+/* Typography styles for text elements */
+@import 'typography';
+
+/* Layout styles for structure */
+@import 'layout';
+
+/* Component-specific styles */
+@import 'components';
+
+/* Finally, responsive adjustments */
+@import 'responsive';
+
+/* Any additional custom styles can be added below */

@@ -1,0 +1,314 @@
+/* Layout */
+
+// Container
+.container {
+    width: 100%;
+    max-width: $container-max-width;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: $spacing-md;
+    padding-right: $spacing-md;
+    
+    @media (max-width: $breakpoint-md) {
+      padding-left: $spacing-lg;
+      padding-right: $spacing-lg;
+    }
+  }
+  
+  // Section Spacing
+  section {
+    padding: $spacing-4xl 0;
+    
+    @media (max-width: $breakpoint-md) {
+      padding: $spacing-3xl 0;
+    }
+    
+    @media (max-width: $breakpoint-sm) {
+      padding: $spacing-2xl 0;
+    }
+  }
+  
+  // Header
+  .site-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: $header-height;
+    background-color: rgba($white, 0.95);
+    z-index: $z-index-fixed;
+    transition: all $transition-normal;
+    box-shadow: $shadow-sm;
+    
+    &.scrolled {
+      box-shadow: $shadow-md;
+      background-color: rgba($white, 0.98);
+    }
+    
+    .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 100%;
+    }
+    
+    .logo {
+      font-family: $font-family-secondary;
+      font-size: $font-size-xl;
+      font-weight: $font-weight-bold;
+      
+      a {
+        color: $dark-color;
+        transition: color $transition-fast;
+        
+        &:hover {
+          color: $primary-color;
+        }
+      }
+    }
+    
+    .mobile-menu-toggle {
+      display: none;
+      font-size: $font-size-xl;
+      color: $dark-color;
+      
+      @media (max-width: $breakpoint-md) {
+        display: block;
+      }
+    }
+    
+    .main-nav {
+      ul {
+        display: flex;
+        
+        li {
+          margin-left: $spacing-lg;
+          
+          a {
+            display: block;
+            padding: $spacing-xs 0;
+            color: $dark-color;
+            font-weight: $font-weight-medium;
+            transition: color $transition-fast;
+            position: relative;
+            
+            &:after {
+              content: '';
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              width: 0;
+              height: 2px;
+              background-color: $primary-color;
+              transition: width $transition-fast;
+            }
+            
+            &:hover, &.active {
+              color: $primary-color;
+              
+              &:after {
+                width: 100%;
+              }
+            }
+          }
+        }
+      }
+      
+      @media (max-width: $breakpoint-md) {
+        position: fixed;
+        top: $header-height;
+        right: 0;
+        width: 250px;
+        height: calc(100vh - #{$header-height});
+        background-color: $white;
+        box-shadow: $shadow-lg;
+        transform: translateX(100%);
+        transition: transform $transition-normal;
+        padding: $spacing-lg;
+        
+        &.open {
+          transform: translateX(0);
+        }
+        
+        ul {
+          flex-direction: column;
+          
+          li {
+            margin-left: 0;
+            margin-bottom: $spacing-lg;
+            
+            a {
+              padding: $spacing-xs 0;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // Main content
+  main {
+    margin-top: $header-height;
+    min-height: calc(100vh - #{$header-height} - #{$footer-height});
+  }
+  
+  // Page headers
+  .page-header {
+    background-color: $light-color;
+    padding: $spacing-3xl 0;
+    margin-bottom: $spacing-3xl;
+    
+    h1 {
+      margin-bottom: 0;
+    }
+  }
+  
+  // Footer
+  .site-footer {
+    background-color: $dark-color;
+    color: $white;
+    padding-top: $spacing-3xl;
+    
+    a {
+      color: $white;
+      opacity: 0.8;
+      transition: opacity $transition-fast;
+      
+      &:hover {
+        opacity: 1;
+        color: $white;
+      }
+    }
+    
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: $spacing-xl;
+      
+      @media (max-width: $breakpoint-md) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      
+      @media (max-width: $breakpoint-sm) {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .footer-section {
+      margin-bottom: $spacing-xl;
+      
+      h3 {
+        color: $white;
+        font-size: $font-size-lg;
+        margin-bottom: $spacing-md;
+        position: relative;
+        padding-bottom: $spacing-sm;
+        
+        &:after {
+          content: '';
+          position: absolute;
+          left: 0;
+          bottom: 0;
+          width: 40px;
+          height: 2px;
+          background-color: $primary-color;
+        }
+      }
+    }
+    
+    .contact {
+      p {
+        margin-bottom: $spacing-sm;
+        display: flex;
+        align-items: center;
+        
+        svg {
+          margin-right: $spacing-sm;
+        }
+      }
+    }
+    
+    .socials {
+      display: flex;
+      margin-top: $spacing-md;
+      
+      a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background-color: rgba($white, 0.1);
+        border-radius: $border-radius-full;
+        margin-right: $spacing-sm;
+        transition: background-color $transition-fast;
+        
+        &:hover {
+          background-color: $primary-color;
+        }
+      }
+    }
+    
+    .links {
+      ul {
+        li {
+          margin-bottom: $spacing-sm;
+        }
+      }
+    }
+    
+    .contact-form {
+      form {
+        input, textarea {
+          width: 100%;
+          background-color: rgba($white, 0.1);
+          border: none;
+          border-radius: $border-radius-sm;
+          padding: $spacing-sm;
+          margin-bottom: $spacing-sm;
+          color: $white;
+          
+          &::placeholder {
+            color: rgba($white, 0.5);
+          }
+        }
+        
+        textarea {
+          resize: vertical;
+          min-height: 100px;
+        }
+      }
+    }
+    
+    .footer-bottom {
+      text-align: center;
+      padding: $spacing-md 0;
+      margin-top: $spacing-2xl;
+      border-top: 1px solid rgba($white, 0.1);
+      
+      p {
+        margin-bottom: 0;
+        font-size: $font-size-sm;
+        opacity: 0.7;
+      }
+    }
+  }
+  
+  // Grid layouts
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: $spacing-lg;
+  }
+  
+  .services-grid, 
+  .gallery-grid,
+  .testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: $spacing-lg;
+    
+    @media (max-width: $breakpoint-sm) {
+      grid-template-columns: 1fr;
+    }
+  }
