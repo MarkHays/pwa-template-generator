@@ -323,6 +323,10 @@ export class EnhancedCLI {
           { name: "🔔 Push Notifications", value: "notifications" },
           { name: "📅 Booking System", value: "booking" },
           { name: "🛒 E-commerce Features", value: "ecommerce" },
+          { name: "🛍️ Shopping Cart", value: "cart" },
+          { name: "💳 Payment Integration", value: "payments" },
+          { name: "⭐ Reviews & Ratings", value: "reviews" },
+          { name: "❤️ Wishlist", value: "wishlist" },
           { name: "👤 User Authentication", value: "auth" },
           { name: "🗄️ Database Integration", value: "database" },
           { name: "🔍 Search Functionality", value: "search" },
@@ -331,6 +335,8 @@ export class EnhancedCLI {
           { name: "🌐 Multi-language Support", value: "i18n" },
           { name: "🎨 Dark Mode", value: "dark-mode" },
           { name: "⚡ Performance Optimization", value: "performance" },
+          { name: "📍 Local SEO", value: "local-seo" },
+          { name: "🔔 Trust Indicators", value: "trust-indicators" },
         ],
         default: this.aiAnalysis.recommendations.features,
       },
@@ -363,6 +369,55 @@ export class EnhancedCLI {
 
   async configureTechnicalSettings() {
     console.log(chalk.blue.bold("⚙️ Technical Configuration\n"));
+
+    // Industry template selection
+    console.log(chalk.cyan("📋 First, let's select your industry template:\n"));
+
+    const industryQuestion = {
+      type: "list",
+      name: "industryTemplate",
+      message: "Choose an industry template:",
+      choices: [
+        {
+          name: "🏢 Small Business (Local services, consultancy)",
+          value: "small-business",
+        },
+        {
+          name: "🛒 E-commerce (Online store, marketplace)",
+          value: "e-commerce",
+        },
+        { name: "💼 SaaS Platform (Software as a service)", value: "saas" },
+        {
+          name: "🎨 Portfolio (Creative professionals, agencies)",
+          value: "portfolio",
+        },
+        {
+          name: "🍽️ Restaurant (Food service, hospitality)",
+          value: "restaurant",
+        },
+        {
+          name: "🏥 Healthcare (Medical, wellness services)",
+          value: "healthcare",
+        },
+      ],
+      default:
+        this.userConfig.industry === "e-commerce"
+          ? "e-commerce"
+          : this.userConfig.industry === "restaurant"
+            ? "restaurant"
+            : this.userConfig.industry === "healthcare"
+              ? "healthcare"
+              : "small-business",
+    };
+
+    const industrySelection = await inquirer.prompt([industryQuestion]);
+    this.userConfig.industryTemplate = industrySelection.industryTemplate;
+
+    console.log(
+      chalk.green(
+        `✅ Selected: ${industrySelection.industryTemplate} template\n`,
+      ),
+    );
 
     const technicalQuestions = [
       {
@@ -735,6 +790,7 @@ export class EnhancedCLI {
       description: this.userConfig.description,
       framework: this.aiAnalysis.recommendations.framework,
       industry: this.userConfig.industry,
+      industryTemplate: this.userConfig.industryTemplate,
       features: this.aiAnalysis.recommendations.features,
       components: this.aiAnalysis.recommendations.components,
       colorScheme: this.aiAnalysis.recommendations.colorScheme,
@@ -743,24 +799,38 @@ export class EnhancedCLI {
       styling: this.userConfig.styling,
       deployment: this.userConfig.deployment,
       aiGenerated: this.aiAnalysis.content,
+      location: this.userConfig.location,
+      phone: this.userConfig.phone,
+      email: this.userConfig.email,
+      seoStrategy: this.aiAnalysis.seoStrategy,
     };
 
     await this.templateEngine.generateProject(config);
   }
 
   async generateEnterpriseComponents() {
-    const components = this.aiAnalysis.recommendations.components || [
-      "Header",
-      "Footer",
-      "Hero",
-      "Services",
-      "Contact",
-      "Gallery",
-    ];
+    // Get industry-specific components
+    const industryTemplateConfig =
+      this.templateEngine.industryTemplates[this.userConfig.industryTemplate] ||
+      this.templateEngine.industryTemplates["small-business"];
+
+    const components = this.aiAnalysis.recommendations.components ||
+      industryTemplateConfig.components || [
+        "Header",
+        "Footer",
+        "Hero",
+        "Services",
+        "Contact",
+        "Gallery",
+      ];
 
     await this.componentGenerator.generateComponentBundle(
       components,
       this.templateEngine.options.outputDir,
+      {
+        industryTemplate: this.userConfig.industryTemplate,
+        framework: this.aiAnalysis.recommendations.framework,
+      },
     );
   }
 

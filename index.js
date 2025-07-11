@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * Enterprise PWA Generator - AI-Powered Solution
- * Creates enterprise-grade PWAs with AI intelligence and advanced features
+ * Enterprise PWA Generator - Phase 2 AI-Powered Solution
+ * Creates enterprise-grade PWAs with advanced AI intelligence, competitive analysis,
+ * content generation, and performance optimization
  */
 
 import dotenv from "dotenv";
-import { EnhancedCLI } from "./src/cli/EnhancedCLI.js";
+import { Phase2CLI } from "./src/cli/Phase2CLI.js";
 import chalk from "chalk";
 
 // Load environment variables
@@ -14,7 +15,7 @@ dotenv.config();
 
 // Check for required environment variables
 const requiredEnvVars = {
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
   DROPBOX_TOKEN: process.env.DROPBOX_TOKEN,
 };
 
@@ -25,15 +26,23 @@ const missingEnvVars = Object.entries(requiredEnvVars)
 if (missingEnvVars.length > 0) {
   console.log(chalk.yellow("⚠️  Optional environment variables not set:"));
   missingEnvVars.forEach((envVar) => {
-    console.log(chalk.gray(`   ${envVar} - Some AI features may be limited`));
+    if (envVar === "ANTHROPIC_API_KEY") {
+      console.log(
+        chalk.gray(
+          `   ${envVar} - Claude AI features will run in fallback mode`,
+        ),
+      );
+    } else {
+      console.log(chalk.gray(`   ${envVar} - Some features may be limited`));
+    }
   });
   console.log(chalk.gray("   Add these to .env file for full functionality\n"));
 }
 
-// Initialize the Enhanced CLI
+// Initialize the Phase 2 CLI
 async function main() {
   try {
-    const cli = new EnhancedCLI();
+    const cli = new Phase2CLI();
     await cli.run();
   } catch (error) {
     console.error(chalk.red("\n💥 Fatal Error:"), error.message);
@@ -45,14 +54,19 @@ async function main() {
 
     console.error(chalk.yellow("\n🔧 Troubleshooting:"));
     console.error(
-      chalk.gray("1. Check your environment variables (.env file)"),
+      chalk.gray("1. Add ANTHROPIC_API_KEY to your .env file for AI features"),
     );
     console.error(chalk.gray("2. Ensure you have Node.js 16+ installed"));
     console.error(
-      chalk.gray("3. Try running with --verbose flag for more details"),
+      chalk.gray(
+        "3. Claude AI features will run in fallback mode without API key",
+      ),
     );
     console.error(
-      chalk.gray("4. Check GitHub issues: https://github.com/your-repo/issues"),
+      chalk.gray("4. Try running with --verbose flag for more details"),
+    );
+    console.error(
+      chalk.gray("5. Check GitHub issues: https://github.com/your-repo/issues"),
     );
 
     process.exit(1);

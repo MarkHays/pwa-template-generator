@@ -258,7 +258,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 Documentation
               </ChakraLink>
               <ChakraLink
-                href="https://github.com/your-org/pwa-generator"
+                href="https://github.com/MarkHays/pwa-template-generator"
                 fontSize="sm"
                 color={textColor}
                 _hover={{ color: "blue.600" }}

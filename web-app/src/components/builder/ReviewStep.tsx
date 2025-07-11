@@ -304,7 +304,7 @@ const ReviewStep: React.FC = () => {
                   <Box>
                     <Text fontWeight="bold">AI Recommendations Applied</Text>
                     <Text fontSize="sm" color="gray.600">
-                      {aiRecommendations.recommendations
+                      {aiRecommendations?.recommendations
                         ? "AI analysis complete"
                         : "No AI recommendations"}
                     </Text>
@@ -326,7 +326,7 @@ const ReviewStep: React.FC = () => {
                 </HStack>
               </AccordionButton>
               <AccordionPanel pb={4}>
-                {aiRecommendations.recommendations ? (
+                {aiRecommendations?.recommendations ? (
                   <VStack spacing={4} align="stretch">
                     <Grid
                       templateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }}
@@ -337,7 +337,7 @@ const ReviewStep: React.FC = () => {
                           Recommended Framework
                         </Text>
                         <Badge colorScheme="purple" fontSize="sm" p={2}>
-                          {aiRecommendations.recommendations.framework}
+                          {aiRecommendations?.recommendations.framework}
                         </Badge>
                       </Box>
                       <Box>
@@ -345,7 +345,7 @@ const ReviewStep: React.FC = () => {
                           Suggested Features
                         </Text>
                         <HStack spacing={2} wrap="wrap">
-                          {aiRecommendations.recommendations.features
+                          {aiRecommendations?.recommendations.features
                             .slice(0, 3)
                             .map((feature, idx) => (
                               <Badge
@@ -356,11 +356,11 @@ const ReviewStep: React.FC = () => {
                                 {feature}
                               </Badge>
                             ))}
-                          {aiRecommendations.recommendations.features.length >
+                          {aiRecommendations?.recommendations.features.length >
                             3 && (
                             <Badge colorScheme="gray" fontSize="xs">
                               +
-                              {aiRecommendations.recommendations.features
+                              {aiRecommendations?.recommendations.features
                                 .length - 3}{" "}
                               more
                             </Badge>
@@ -368,13 +368,13 @@ const ReviewStep: React.FC = () => {
                         </HStack>
                       </Box>
                     </Grid>
-                    {aiRecommendations.insights?.recommendations && (
+                    {aiRecommendations?.insights?.recommendations && (
                       <Box>
                         <Text fontWeight="bold" mb={2}>
                           Key Insights
                         </Text>
                         <List spacing={1}>
-                          {aiRecommendations.insights.recommendations
+                          {aiRecommendations?.insights.recommendations
                             .slice(0, 3)
                             .map((insight, idx) => (
                               <ListItem key={idx} fontSize="sm">

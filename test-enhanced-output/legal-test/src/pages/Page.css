@@ -1,0 +1,15 @@
+@import '../styles/main.css';
+
+/* Generic Page Styles */
+.page-content {
+  padding: 2rem 0;
+}
+
+.page-content h1 {
+  margin-bottom: 1.5rem;
+}
+
+.page-content p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}

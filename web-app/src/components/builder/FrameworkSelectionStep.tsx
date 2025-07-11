@@ -204,7 +204,7 @@ const FrameworkSelectionStep: React.FC = () => {
   };
 
   const recommendedFramework = FRAMEWORKS.find(
-    (f) => f.id === aiRecommendations.recommendations?.framework,
+    (f) => f.id === aiRecommendations?.recommendations?.framework,
   );
 
   return (

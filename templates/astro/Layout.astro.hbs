@@ -1,0 +1,517 @@
+---
+// Layout.astro.hbs - Astro PWA Layout Template
+export interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  ogImage?: string;
+  noindex?: boolean;
+  className?: string;
+}
+
+const {
+  title = '{{businessName}} - {{description}}',
+  description = '{{description}}',
+  canonical = Astro.url.pathname,
+  ogImage = '/og-image.jpg',
+  noindex = false,
+  className = ''
+} = Astro.props;
+
+const baseUrl = Astro.site || new URL(Astro.url.origin);
+const canonicalUrl = new URL(canonical, baseUrl);
+const ogImageUrl = new URL(ogImage, baseUrl);
+
+// Generate structured data
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: '{{businessName}}',
+  description: '{{description}}',
+  url: baseUrl.toString(),
+  {{#if location}}
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: '{{location}}',
+    addressCountry: 'US'
+  },
+  {{/if}}
+  {{#if socialLinks}}
+  sameAs: [
+    {{#each socialLinks}}
+    '{{this}}'{{#unless @last}},{{/unless}}
+    {{/each}}
+  ]
+  {{/if}}
+};
+
+// PWA configuration
+const pwaConfig = {
+  name: '{{businessName}}',
+  shortName: '{{businessName}}',
+  themeColor: '{{colorScheme.primary}}',
+  backgroundColor: '{{colorScheme.secondary}}',
+  features: {{json features}}
+};
+---
+
+<!DOCTYPE html>
+<html lang="en" class={className}>
+  <head>
+    <!-- Basic Meta Tags -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Title & Description -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="keywords" content="{{businessName}}, {{industry}}, {{#each seoStrategy.keywords}}{{this}}, {{/each}}pwa, astro" />
+    <meta name="author" content="{{businessName}}" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Robots -->
+    {!noindex && <meta name="robots" content="index, follow" />}
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:alt" content={title} />
+    <meta property="og:site_name" content="{{businessName}}" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="twitter:image:alt" content={title} />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="{{colorScheme.primary}}" />
+    <meta name="msapplication-TileColor" content="{{colorScheme.primary}}" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="{{colorScheme.primary}}" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Apple Web App -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="{{businessName}}" />
+
+    <!-- Disable automatic detection -->
+    <meta name="format-detection" content="telephone=no, date=no, address=no, email=no" />
+
+    <!-- Preconnect to external domains -->
+    {{#if analytics}}
+    <link rel="preconnect" href="https://www.google-analytics.com" />
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
+    {{/if}}
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
+
+    <!-- Critical CSS -->
+    <style>
+      /* Critical CSS for above-the-fold content */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        line-height: 1.6;
+        color: #333;
+        background-color: #fff;
+      }
+
+      .app {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Loading spinner */
+      .loading-spinner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid {{colorScheme.primary}};
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* Offline banner */
+      .offline-banner {
+        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        color: white;
+        padding: 0.75rem 1rem;
+        text-align: center;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+      }
+
+      /* PWA Install Prompt */
+      .pwa-install-prompt {
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        max-width: 300px;
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateY(100px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* Dark mode support */
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #1a1a1a;
+          color: #ffffff;
+        }
+
+        .pwa-install-prompt {
+          background: #2d2d2d;
+          color: white;
+        }
+      }
+
+      /* Reduced motion support */
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+
+        * {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* High contrast mode */
+      @media (prefers-contrast: high) {
+        body {
+          border: 1px solid;
+        }
+      }
+    </style>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+
+    <!-- PWA Configuration -->
+    <script define:vars={{ pwaConfig }}>
+      window.pwaConfig = pwaConfig;
+    </script>
+  </head>
+
+  <body>
+    <div class="app" id="app">
+      <!-- Header -->
+      <header class="header">
+        <slot name="header">
+          <!-- Default header content -->
+          <nav class="navbar">
+            <div class="container">
+              <a href="/" class="logo">{{businessName}}</a>
+              <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                {{#if features.includes "services"}}
+                <li><a href="/services">Services</a></li>
+                {{/if}}
+                {{#if features.includes "blog"}}
+                <li><a href="/blog">Blog</a></li>
+                {{/if}}
+                <li><a href="/contact">Contact</a></li>
+              </ul>
+            </div>
+          </nav>
+        </slot>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content" role="main">
+        <!-- Offline Banner -->
+        <div id="offline-banner" class="offline-banner" style="display: none;">
+          <p>You're currently offline. Some features may be limited.</p>
+        </div>
+
+        <!-- Page Content -->
+        <slot />
+      </main>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <slot name="footer">
+          <!-- Default footer content -->
+          <div class="container">
+            <div class="footer-content">
+              <div class="footer-section">
+                <h3>{{businessName}}</h3>
+                <p>{{description}}</p>
+              </div>
+
+              {{#if features.includes "contact-info"}}
+              <div class="footer-section">
+                <h4>Contact Info</h4>
+                {{#if location}}
+                <p>📍 {{location}}</p>
+                {{/if}}
+                {{#if phone}}
+                <p>📞 {{phone}}</p>
+                {{/if}}
+                {{#if email}}
+                <p>✉️ {{email}}</p>
+                {{/if}}
+              </div>
+              {{/if}}
+
+              {{#if socialLinks}}
+              <div class="footer-section">
+                <h4>Follow Us</h4>
+                <div class="social-links">
+                  {{#each socialLinks}}
+                  <a href="{{this}}" target="_blank" rel="noopener noreferrer">
+                    {{this}}
+                  </a>
+                  {{/each}}
+                </div>
+              </div>
+              {{/if}}
+            </div>
+
+            <div class="footer-bottom">
+              <p>&copy; {new Date().getFullYear()} {{businessName}}. All rights reserved.</p>
+            </div>
+          </div>
+        </slot>
+      </footer>
+
+      <!-- PWA Install Prompt -->
+      <div id="pwa-install-prompt" class="pwa-install-prompt" style="display: none;">
+        <h3>Install {{businessName}}</h3>
+        <p>Install our app for the best experience!</p>
+        <div class="prompt-actions">
+          <button id="install-button" class="btn btn-primary">Install</button>
+          <button id="dismiss-button" class="btn btn-secondary">Later</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+      // App state
+      let appState = {
+        isOnline: navigator.onLine,
+        installPrompt: null,
+        isInstalled: false
+      };
+
+      // DOM elements
+      const offlineBanner = document.getElementById('offline-banner');
+      const pwaInstallPrompt = document.getElementById('pwa-install-prompt');
+      const installButton = document.getElementById('install-button');
+      const dismissButton = document.getElementById('dismiss-button');
+
+      // Initialize app
+      function initializeApp() {
+        setupEventListeners();
+        setupServiceWorker();
+        {{#if analytics}}
+        setupAnalytics();
+        {{/if}}
+        {{#if performance}}
+        setupPerformanceMonitoring();
+        {{/if}}
+      }
+
+      // Setup event listeners
+      function setupEventListeners() {
+        // Network status
+        window.addEventListener('online', () => {
+          appState.isOnline = true;
+          offlineBanner.style.display = 'none';
+          {{#if analytics}}
+          trackEvent('network_online');
+          {{/if}}
+        });
+
+        window.addEventListener('offline', () => {
+          appState.isOnline = false;
+          offlineBanner.style.display = 'block';
+          {{#if analytics}}
+          trackEvent('network_offline');
+          {{/if}}
+        });
+
+        // PWA install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          appState.installPrompt = e;
+          pwaInstallPrompt.style.display = 'block';
+        });
+
+        window.addEventListener('appinstalled', () => {
+          appState.isInstalled = true;
+          pwaInstallPrompt.style.display = 'none';
+          {{#if analytics}}
+          trackEvent('pwa_installed');
+          {{/if}}
+        });
+
+        // PWA install buttons
+        installButton?.addEventListener('click', async () => {
+          if (appState.installPrompt) {
+            const result = await appState.installPrompt.prompt();
+            {{#if analytics}}
+            trackEvent('pwa_install_prompt_result', { outcome: result.outcome });
+            {{/if}}
+            pwaInstallPrompt.style.display = 'none';
+            appState.installPrompt = null;
+          }
+        });
+
+        dismissButton?.addEventListener('click', () => {
+          pwaInstallPrompt.style.display = 'none';
+          {{#if analytics}}
+          trackEvent('pwa_install_prompt_dismissed');
+          {{/if}}
+        });
+
+        // Error handling
+        window.addEventListener('error', (event) => {
+          console.error('App Error:', event.error);
+          {{#if analytics}}
+          trackEvent('app_error', {
+            error: event.error?.message,
+            stack: event.error?.stack
+          });
+          {{/if}}
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+          console.error('Unhandled Promise Rejection:', event.reason);
+          {{#if analytics}}
+          trackEvent('app_error', {
+            error: event.reason?.message || event.reason,
+            type: 'unhandled_promise_rejection'
+          });
+          {{/if}}
+        });
+      }
+
+      // Setup service worker
+      function setupServiceWorker() {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('SW registered:', registration);
+            })
+            .catch(error => {
+              console.error('SW registration failed:', error);
+            });
+        }
+      }
+
+      {{#if analytics}}
+      // Setup analytics
+      function setupAnalytics() {
+        // Track app loaded
+        trackEvent('app_loaded', {
+          framework: '{{framework}}',
+          version: '{{version}}',
+          features: window.pwaConfig.features,
+          timestamp: new Date().toISOString()
+        });
+
+        // Track page views
+        trackEvent('page_view', {
+          page: window.location.pathname,
+          title: document.title
+        });
+      }
+
+      function trackEvent(eventName, data = {}) {
+        // Implement your analytics tracking here
+        console.log('Analytics Event:', eventName, data);
+      }
+      {{/if}}
+
+      {{#if performance}}
+      // Setup performance monitoring
+      function setupPerformanceMonitoring() {
+        // Core Web Vitals
+        import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+          getCLS(console.log);
+          getFID(console.log);
+          getFCP(console.log);
+          getLCP(console.log);
+          getTTFB(console.log);
+        });
+      }
+      {{/if}}
+
+      // Initialize when DOM is ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeApp);
+      } else {
+        initializeApp();
+      }
+    </script>
+
+    <!-- Load non-critical CSS -->
+    <link rel="stylesheet" href="/styles/main.css" />
+  </body>
+</html>

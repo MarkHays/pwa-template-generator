@@ -43,6 +43,9 @@ import {
   FiCalendar,
   FiArrowRight,
   FiCheck,
+  FiMail,
+  FiImage,
+  FiMessageCircle,
 } from "react-icons/fi";
 import { usePWAGeneratorStore } from "../../store/PWAGeneratorStore";
 import { toast } from "react-hot-toast";
@@ -136,8 +139,37 @@ const FEATURES: Feature[] = [
     complexity: "Hard",
     premium: true,
   },
+  {
+    id: "gallery",
+    name: "Image Gallery",
+    description: "Beautiful image galleries and photo showcases",
+    icon: FiImage,
+    color: "purple",
+    category: "user",
+    complexity: "Easy",
+  },
 
   // Business Features
+  {
+    id: "contact-form",
+    name: "Contact Forms",
+    description: "Professional contact forms and inquiry management",
+    icon: FiMail,
+    color: "blue",
+    category: "business",
+    complexity: "Medium",
+    recommended: true,
+  },
+  {
+    id: "testimonials",
+    name: "Customer Testimonials",
+    description: "Showcase customer reviews and success stories",
+    icon: FiMessageCircle,
+    color: "green",
+    category: "business",
+    complexity: "Easy",
+    recommended: true,
+  },
   {
     id: "payments",
     name: "Payment Processing",
@@ -269,7 +301,8 @@ const FeaturesSelectionStep: React.FC = () => {
     setCurrentStep(4); // Move to customization step
   };
 
-  const recommendedFeatures = aiRecommendations.recommendations?.features || [];
+  const recommendedFeatures =
+    aiRecommendations?.recommendations?.features || [];
   const filteredFeatures = FEATURES.filter(
     (feature) =>
       feature.category === selectedCategory &&

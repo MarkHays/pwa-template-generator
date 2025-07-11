@@ -104,7 +104,7 @@ const BuilderPage: React.FC = () => {
       description: "Get personalized recommendations",
       icon: FiZap,
       component: AIRecommendationsStep,
-      isComplete: !!aiRecommendations.analysis,
+      isComplete: !!aiRecommendations?.analysis,
     },
     {
       title: "Framework",
@@ -255,12 +255,28 @@ const BuilderPage: React.FC = () => {
                   />
 
                   {/* Step Indicator */}
-                  <Stepper index={activeStep} colorScheme="blue" w="full">
+                  <Stepper
+                    index={activeStep}
+                    colorScheme="blue"
+                    w="full"
+                    orientation="horizontal"
+                    sx={{
+                      "& .chakra-step": {
+                        display: "inline-flex",
+                        alignItems: "center",
+                        flex: "1 1 0%",
+                      },
+                      "& .chakra-step__separator": {
+                        flex: "1 1 0%",
+                      },
+                    }}
+                  >
                     {steps.map((step, index) => (
                       <Step key={index}>
                         <StepIndicator
                           cursor={index <= currentStep ? "pointer" : "default"}
                           onClick={() => handleStepClick(index)}
+                          flexShrink={0}
                         >
                           <StepStatus
                             complete={<StepIcon />}
@@ -269,7 +285,7 @@ const BuilderPage: React.FC = () => {
                           />
                         </StepIndicator>
 
-                        <Box flexShrink="0">
+                        <Box flexShrink="0" ml={2}>
                           <StepTitle>{step.title}</StepTitle>
                           <StepDescription>{step.description}</StepDescription>
                         </Box>
@@ -396,7 +412,7 @@ const BuilderPage: React.FC = () => {
           </Box>
 
           {/* AI Insights Sidebar (if recommendations available) */}
-          {aiRecommendations.analysis && (
+          {aiRecommendations?.analysis && (
             <MotionCard
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -424,7 +440,7 @@ const BuilderPage: React.FC = () => {
                       Recommended Framework
                     </Text>
                     <Badge colorScheme="blue">
-                      {aiRecommendations.recommendations?.framework}
+                      {aiRecommendations?.recommendations?.framework}
                     </Badge>
                   </Box>
 
@@ -448,13 +464,13 @@ const BuilderPage: React.FC = () => {
                     </HStack>
                   </Box>
 
-                  {aiRecommendations.insights?.recommendations && (
+                  {aiRecommendations?.insights?.recommendations && (
                     <Box>
                       <Text fontSize="sm" fontWeight="medium" mb={2}>
                         Key Recommendations
                       </Text>
                       <VStack spacing={1} align="start">
-                        {aiRecommendations.insights?.recommendations
+                        {aiRecommendations?.insights?.recommendations
                           ?.slice(0, 3)
                           .map((rec: string, index: number) => (
                             <Text key={index} fontSize="xs" color="gray.600">

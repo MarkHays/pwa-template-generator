@@ -1,0 +1,15 @@
+.login-page {
+  min-height: 100vh;
+  padding: 2rem 0;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  color: var(--gray-900);
+  margin-bottom: 1rem;
+}

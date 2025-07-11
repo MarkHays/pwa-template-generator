@@ -37,6 +37,13 @@ import {
   Switch,
   FormControl,
   FormLabel,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { motion } from "framer-motion";
 import {
@@ -51,9 +58,12 @@ import {
   FiSmartphone,
   FiMonitor,
   FiRefreshCw,
+  FiKey,
 } from "react-icons/fi";
 import { usePWAGeneratorStore } from "../../store/PWAGeneratorStore";
 import { toast } from "react-hot-toast";
+import { aiService } from "../../services/aiService";
+import APIKeySettings from "../settings/APIKeySettings";
 
 const MotionBox = motion(Box);
 
@@ -71,25 +81,34 @@ const AIRecommendationsStep: React.FC = () => {
   const [autoAcceptRecommendations, setAutoAcceptRecommendations] =
     useState(true);
   const [analysisStarted, setAnalysisStarted] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
+  const {
+    isOpen: isSettingsOpen,
+    onOpen: onSettingsOpen,
+    onClose: onSettingsClose,
+  } = useDisclosure();
 
   const cardBg = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
   const statBg = useColorModeValue("gray.50", "gray.700");
 
   useEffect(() => {
-    if (!aiRecommendations.analysis && !isAnalyzing && !analysisStarted) {
+    // Check API key status
+    setHasApiKey(aiService.hasApiKey());
+
+    if (!aiRecommendations?.analysis && !isAnalyzing && !analysisStarted) {
       setAnalysisStarted(true);
       analyzeBusinessNeeds();
     }
   }, [
-    aiRecommendations.analysis,
+    aiRecommendations?.analysis,
     isAnalyzing,
     analysisStarted,
     analyzeBusinessNeeds,
   ]);
 
   const handleAcceptRecommendations = () => {
-    if (aiRecommendations.recommendations) {
+    if (aiRecommendations?.recommendations) {
       setSelectedFramework(aiRecommendations.recommendations.framework);
       setSelectedFeatures(aiRecommendations.recommendations.features);
       toast.success("AI recommendations accepted!");
@@ -186,7 +205,7 @@ const AIRecommendationsStep: React.FC = () => {
     );
   }
 
-  if (!aiRecommendations.analysis) {
+  if (!aiRecommendations?.analysis) {
     return (
       <MotionBox
         initial={{ opacity: 0, y: 20 }}
@@ -226,17 +245,63 @@ const AIRecommendationsStep: React.FC = () => {
           transition={{ duration: 0.5 }}
         >
           <VStack spacing={4} align="start">
-            <HStack spacing={3}>
-              <Icon as={FiZap} boxSize={8} color="blue.500" />
-              <Heading size="lg" color="blue.500">
-                AI Analysis Complete
-              </Heading>
+            <HStack spacing={3} justify="space-between" w="full">
+              <HStack spacing={3}>
+                <Icon as={FiZap} boxSize={8} color="blue.500" />
+                <Heading size="lg" color="blue.500">
+                  AI Analysis Complete
+                </Heading>
+              </HStack>
+              <HStack spacing={3}>
+                <Badge
+                  colorScheme={hasApiKey ? "green" : "gray"}
+                  variant="subtle"
+                  fontSize="xs"
+                  px={2}
+                  py={1}
+                >
+                  <HStack spacing={1}>
+                    <Icon as={FiKey} boxSize={3} />
+                    <Text>{hasApiKey ? "Claude AI" : "Enhanced Mode"}</Text>
+                  </HStack>
+                </Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  leftIcon={<FiSettings />}
+                  onClick={onSettingsOpen}
+                >
+                  AI Settings
+                </Button>
+              </HStack>
             </HStack>
-            <Text color="gray.600" fontSize="lg">
-              Based on your business information, our AI has generated
-              personalized recommendations for your PWA. Review the insights
-              below and customize as needed.
-            </Text>
+            <VStack spacing={2} align="start">
+              <Text color="gray.600" fontSize="lg">
+                Based on your business information, our AI has generated
+                personalized recommendations for your PWA. Review the insights
+                below and customize as needed.
+              </Text>
+              {!hasApiKey && (
+                <Alert status="info" size="sm" borderRadius="md">
+                  <AlertIcon />
+                  <AlertDescription fontSize="sm">
+                    Connect your Claude API key for even more personalized
+                    recommendations.{" "}
+                    <Button
+                      size="xs"
+                      variant="link"
+                      colorScheme="blue"
+                      onClick={onSettingsOpen}
+                      p={0}
+                      h="auto"
+                      minW="auto"
+                    >
+                      Add API Key
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+            </VStack>
           </VStack>
         </MotionBox>
 
@@ -282,7 +347,7 @@ const AIRecommendationsStep: React.FC = () => {
                             Business Type
                           </Text>
                           <Badge colorScheme="blue" fontSize="sm" p={2}>
-                            {aiRecommendations.analysis?.businessType}
+                            {aiRecommendations?.analysis?.businessType}
                           </Badge>
                         </Box>
                         <Box>
@@ -290,7 +355,7 @@ const AIRecommendationsStep: React.FC = () => {
                             Target Audience
                           </Text>
                           <Badge colorScheme="green" fontSize="sm" p={2}>
-                            {aiRecommendations.analysis?.targetAudience}
+                            {aiRecommendations?.analysis?.targetAudience}
                           </Badge>
                         </Box>
                       </SimpleGrid>
@@ -304,7 +369,7 @@ const AIRecommendationsStep: React.FC = () => {
                     </CardHeader>
                     <CardBody>
                       <List spacing={3}>
-                        {aiRecommendations.analysis?.competitiveAdvantages.map(
+                        {aiRecommendations?.analysis?.competitiveAdvantages.map(
                           (advantage, index) => (
                             <ListItem key={index}>
                               <ListIcon as={FiCheckCircle} color="green.500" />
@@ -323,7 +388,7 @@ const AIRecommendationsStep: React.FC = () => {
                     </CardHeader>
                     <CardBody>
                       <HStack spacing={4} wrap="wrap">
-                        {aiRecommendations.analysis?.userJourney.map(
+                        {aiRecommendations?.analysis?.userJourney.map(
                           (step, index) => (
                             <React.Fragment key={index}>
                               <Badge
@@ -335,7 +400,8 @@ const AIRecommendationsStep: React.FC = () => {
                                 {step}
                               </Badge>
                               {index <
-                                aiRecommendations.analysis!.userJourney.length -
+                                aiRecommendations?.analysis?.userJourney
+                                  .length -
                                   1 && (
                                 <Icon as={FiArrowRight} color="gray.400" />
                               )}
@@ -361,7 +427,7 @@ const AIRecommendationsStep: React.FC = () => {
                         <Icon as={FiCode} boxSize={8} color="blue.500" />
                         <Box>
                           <Text fontSize="xl" fontWeight="bold" mb={2}>
-                            {aiRecommendations.recommendations?.framework.toUpperCase()}
+                            {aiRecommendations?.recommendations?.framework.toUpperCase()}
                           </Text>
                           <Text color="gray.600" mb={4}>
                             Based on your business needs and target audience,
@@ -389,7 +455,7 @@ const AIRecommendationsStep: React.FC = () => {
                         templateColumns="repeat(auto-fill, minmax(200px, 1fr))"
                         gap={4}
                       >
-                        {aiRecommendations.recommendations?.features.map(
+                        {aiRecommendations?.recommendations?.features.map(
                           (feature, index) => (
                             <Box
                               key={index}
@@ -420,7 +486,10 @@ const AIRecommendationsStep: React.FC = () => {
                         <Stat>
                           <StatLabel>Largest Contentful Paint</StatLabel>
                           <StatNumber>
-                            {aiRecommendations.recommendations?.performance.lcp}
+                            {
+                              aiRecommendations?.recommendations?.performance
+                                .lcp
+                            }
                             s
                           </StatNumber>
                           <StatHelpText>
@@ -431,7 +500,10 @@ const AIRecommendationsStep: React.FC = () => {
                         <Stat>
                           <StatLabel>First Input Delay</StatLabel>
                           <StatNumber>
-                            {aiRecommendations.recommendations?.performance.fid}
+                            {
+                              aiRecommendations?.recommendations?.performance
+                                .fid
+                            }
                             ms
                           </StatNumber>
                           <StatHelpText>
@@ -442,7 +514,10 @@ const AIRecommendationsStep: React.FC = () => {
                         <Stat>
                           <StatLabel>Cumulative Layout Shift</StatLabel>
                           <StatNumber>
-                            {aiRecommendations.recommendations?.performance.cls}
+                            {
+                              aiRecommendations?.recommendations?.performance
+                                .cls
+                            }
                           </StatNumber>
                           <StatHelpText>
                             <StatArrow type="increase" />
@@ -470,7 +545,7 @@ const AIRecommendationsStep: React.FC = () => {
                             Hero Title
                           </Text>
                           <Text fontSize="lg" color="blue.600">
-                            {aiRecommendations.content?.heroTitle}
+                            {aiRecommendations?.content?.heroTitle}
                           </Text>
                         </Box>
                         <Box>
@@ -478,7 +553,7 @@ const AIRecommendationsStep: React.FC = () => {
                             Hero Subtitle
                           </Text>
                           <Text color="gray.600">
-                            {aiRecommendations.content?.heroSubtitle}
+                            {aiRecommendations?.content?.heroSubtitle}
                           </Text>
                         </Box>
                       </VStack>
@@ -492,7 +567,7 @@ const AIRecommendationsStep: React.FC = () => {
                     </CardHeader>
                     <CardBody>
                       <HStack spacing={4} wrap="wrap">
-                        {aiRecommendations.content?.ctaTexts.map(
+                        {aiRecommendations?.content?.ctaTexts.map(
                           (cta, index) => (
                             <Button
                               key={index}
@@ -520,7 +595,7 @@ const AIRecommendationsStep: React.FC = () => {
                             Meta Description
                           </Text>
                           <Text color="gray.600">
-                            {aiRecommendations.content?.metaDescription}
+                            {aiRecommendations?.content?.metaDescription}
                           </Text>
                         </Box>
                         <Box>
@@ -528,7 +603,7 @@ const AIRecommendationsStep: React.FC = () => {
                             Target Keywords
                           </Text>
                           <HStack spacing={2} wrap="wrap">
-                            {aiRecommendations.content?.keywords.map(
+                            {aiRecommendations?.content?.keywords.map(
                               (keyword, index) => (
                                 <Badge key={index} colorScheme="orange">
                                   {keyword}
@@ -553,7 +628,7 @@ const AIRecommendationsStep: React.FC = () => {
                     </CardHeader>
                     <CardBody>
                       <List spacing={3}>
-                        {aiRecommendations.insights?.marketTrends.map(
+                        {aiRecommendations?.insights?.marketTrends.map(
                           (trend, index) => (
                             <ListItem key={index}>
                               <ListIcon as={FiTrendingUp} color="green.500" />
@@ -572,7 +647,7 @@ const AIRecommendationsStep: React.FC = () => {
                     </CardHeader>
                     <CardBody>
                       <List spacing={3}>
-                        {aiRecommendations.insights?.recommendations.map(
+                        {aiRecommendations?.insights?.recommendations.map(
                           (rec, index) => (
                             <ListItem key={index}>
                               <ListIcon as={FiStar} color="yellow.500" />
@@ -670,6 +745,18 @@ const AIRecommendationsStep: React.FC = () => {
             </CardBody>
           </Card>
         </MotionBox>
+
+        {/* API Settings Modal */}
+        <Modal isOpen={isSettingsOpen} onClose={onSettingsClose} size="xl">
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>AI Settings</ModalHeader>
+            <ModalCloseButton />
+            <ModalBody pb={6}>
+              <APIKeySettings />
+            </ModalBody>
+          </ModalContent>
+        </Modal>
       </VStack>
     </Box>
   );

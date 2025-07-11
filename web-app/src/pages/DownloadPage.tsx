@@ -355,7 +355,7 @@ const DownloadPage: React.FC = () => {
                         📚 Documentation
                       </Link>
                       <Link
-                        href="https://github.com/your-org/pwa-generator"
+                        href="https://github.com/MarkHays/pwa-template-generator"
                         isExternal
                         color="blue.500"
                         _hover={{ textDecoration: "underline" }}
@@ -429,7 +429,7 @@ const DownloadPage: React.FC = () => {
                       variant="outline"
                       onClick={() =>
                         window.open(
-                          "https://github.com/your-org/pwa-generator",
+                          "https://github.com/MarkHays/pwa-template-generator",
                           "_blank",
                         )
                       }

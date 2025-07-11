@@ -1,0 +1,281 @@
+<template>
+  <div :class="appClasses">
+    <Header
+      :is-online="appState.isOnline"
+      :can-install="!!appState.installPrompt"
+      @install-click="handleInstallClick"
+    />
+
+    <main class="main-content" role="main">
+      <div v-if="!appState.isOnline" class="offline-banner" role="banner">
+        <p>You're currently offline. Some features may be limited.</p>
+      </div>
+
+      <Suspense>
+        <template #default>
+          <RouterView />
+        </template>
+        <template #fallback>
+          <LoadingSpinner />
+        </template>
+      </Suspense>
+    </main>
+
+    <Footer />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { RouterView } from 'vue-router'
+{{#if analytics}}
+import { useAnalytics } from '@/composables/useAnalytics'
+{{/if}}
+{{#if performance}}
+import { usePerformance } from '@/composables/usePerformance'
+{{/if}}
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+import Header from '@/components/layout/Header.vue'
+import Footer from '@/components/layout/Footer.vue'
+{{#if features.includes "notifications"}}
+import { useNotifications } from '@/composables/useNotifications'
+{{/if}}
+{{#if features.includes "dark-mode"}}
+import { useTheme } from '@/composables/useTheme'
+{{/if}}
+
+// Props
+interface Props {
+  className?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  className: ''
+})
+
+// Reactive state
+interface AppState {
+  isOnline: boolean
+  installPrompt: any
+  isInstalled: boolean
+}
+
+const appState = ref<AppState>({
+  isOnline: navigator.onLine,
+  installPrompt: null,
+  isInstalled: false
+})
+
+// Computed properties
+const appClasses = computed(() => [
+  'app',
+  props.className,
+  { 'offline': !appState.value.isOnline }
+])
+
+{{#if analytics}}
+// Initialize analytics
+const { track } = useAnalytics()
+{{/if}}
+
+{{#if performance}}
+// Initialize performance monitoring
+const { trackWebVitals } = usePerformance()
+{{/if}}
+
+{{#if features.includes "notifications"}}
+// Initialize notifications
+const { showNotification } = useNotifications()
+{{/if}}
+
+{{#if features.includes "dark-mode"}}
+// Initialize theme
+const { theme, toggleTheme } = useTheme()
+{{/if}}
+
+// PWA install prompt handling
+const handleBeforeInstallPrompt = (e: Event) => {
+  e.preventDefault()
+  appState.value.installPrompt = e
+}
+
+const handleAppInstalled = () => {
+  appState.value.isInstalled = true
+  appState.value.installPrompt = null
+  {{#if analytics}}
+  track('pwa_installed')
+  {{/if}}
+}
+
+// Network status monitoring
+const handleOnline = () => {
+  appState.value.isOnline = true
+  {{#if analytics}}
+  track('network_online')
+  {{/if}}
+}
+
+const handleOffline = () => {
+  appState.value.isOnline = false
+  {{#if analytics}}
+  track('network_offline')
+  {{/if}}
+}
+
+// Install PWA handler
+const handleInstallClick = async () => {
+  if (appState.value.installPrompt) {
+    try {
+      const result = await appState.value.installPrompt.prompt()
+      {{#if analytics}}
+      track('pwa_install_prompt_result', { outcome: result.outcome })
+      {{/if}}
+      appState.value.installPrompt = null
+    } catch (error) {
+      console.error('Error installing PWA:', error)
+    }
+  }
+}
+
+// Lifecycle hooks
+onMounted(() => {
+  {{#if analytics}}
+  // Track app loaded
+  track('app_loaded', {
+    framework: '{{framework}}',
+    version: '{{version}}',
+    features: {{json features}},
+    timestamp: new Date().toISOString()
+  })
+  {{/if}}
+
+  {{#if performance}}
+  // Initialize performance monitoring
+  trackWebVitals({
+    onCLS: (metric) => console.log('CLS:', metric),
+    onFID: (metric) => console.log('FID:', metric),
+    onFCP: (metric) => console.log('FCP:', metric),
+    onLCP: (metric) => console.log('LCP:', metric),
+    onTTFB: (metric) => console.log('TTFB:', metric),
+  })
+  {{/if}}
+
+  // Add event listeners
+  window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+  window.addEventListener('appinstalled', handleAppInstalled)
+  window.addEventListener('online', handleOnline)
+  window.addEventListener('offline', handleOffline)
+})
+
+onUnmounted(() => {
+  // Remove event listeners
+  window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
+  window.removeEventListener('appinstalled', handleAppInstalled)
+  window.removeEventListener('online', handleOnline)
+  window.removeEventListener('offline', handleOffline)
+})
+
+// Global error handler
+const handleError = (error: Error) => {
+  console.error('App Error:', error)
+  {{#if analytics}}
+  track('app_error', {
+    error: error.message,
+    stack: error.stack
+  })
+  {{/if}}
+}
+
+// Register global error handler
+window.addEventListener('error', (event) => {
+  handleError(event.error)
+})
+
+window.addEventListener('unhandledrejection', (event) => {
+  handleError(new Error(event.reason))
+})
+</script>
+
+<style scoped lang="scss">
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+
+  &.offline {
+    opacity: 0.9;
+  }
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.offline-banner {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: white;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .app {
+    font-size: 0.9rem;
+  }
+}
+
+// Animation for offline state
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.offline-banner {
+  animation: fadeIn 0.3s ease-out;
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .app {
+    background-color: #1a1a1a;
+    color: #ffffff;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .offline-banner {
+    background: #000000;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+  }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  .app,
+  .offline-banner {
+    transition: none;
+    animation: none;
+  }
+}
+</style>

@@ -48,6 +48,79 @@
 1. Visit [pwa-template-generator.web.app](https://pwa-template-generator.web.app)
 2. Click "Start Building" and follow the guided wizard
 3. Download your generated project
+
+### Option 2: Local Installation with AI Features
+
+#### Prerequisites
+- Node.js 16+ installed
+- npm or yarn package manager
+
+#### Installation
+```bash
+# Clone the repository
+git clone https://github.com/MarkHays/pwa-template-generator.git
+cd pwa-template-generator
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+```
+
+#### Environment Setup (Optional but Recommended)
+
+For full AI-powered features, create a `.env` file in the root directory:
+
+```env
+# Claude AI Integration (Anthropic)
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# Dropbox Integration (Optional)
+DROPBOX_TOKEN=your_dropbox_token_here
+```
+
+#### Getting Your Claude API Key
+
+1. **Sign up for Anthropic Claude API:**
+   - Visit [console.anthropic.com](https://console.anthropic.com)
+   - Create an account or sign in
+   - Navigate to "API Keys" section
+   - Create a new API key
+
+2. **Add to your environment:**
+   ```bash
+   echo "ANTHROPIC_API_KEY=your_actual_api_key_here" > .env
+   ```
+
+#### Running the Generator
+
+```bash
+# Run the interactive CLI
+node index.js
+
+# Or use the global command (if installed globally)
+npx pwa-template-generator
+```
+
+#### Fallback Mode
+
+The generator works perfectly without API keys! When no `ANTHROPIC_API_KEY` is provided:
+- ✅ All core functionality works
+- ✅ Template generation works
+- ✅ Framework selection works
+- ✅ Component generation works
+- 🤖 AI features use smart fallback logic instead of Claude API
+
+### Option 3: NPM Package (Coming Soon)
+
+```bash
+# Install globally
+npm install -g pwa-template-generator
+
+# Run anywhere
+pwa-template-generator
+```
 4. Extract and run:
    ```bash
    npm install

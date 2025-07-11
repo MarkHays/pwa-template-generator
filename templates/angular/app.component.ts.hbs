@@ -1,0 +1,450 @@
+import { Component, OnInit, OnDestroy, inject, signal, computed, effect } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { Meta, Title } from '@angular/platform-browser';
+import { SwUpdate, SwPush } from '@angular/service-worker';
+import { filter, takeUntil } from 'rxjs/operators';
+import { Subject, fromEvent, merge } from 'rxjs';
+
+{{#if analytics}}
+import { AnalyticsService } from './services/analytics.service';
+{{/if}}
+{{#if performance}}
+import { PerformanceService } from './services/performance.service';
+{{/if}}
+{{#if features.includes "notifications"}}
+import { NotificationService } from './services/notification.service';
+{{/if}}
+{{#if features.includes "dark-mode"}}
+import { ThemeService } from './services/theme.service';
+{{/if}}
+
+import { HeaderComponent } from './components/layout/header/header.component';
+import { FooterComponent } from './components/layout/footer/footer.component';
+import { LoadingSpinnerComponent } from './components/common/loading-spinner/loading-spinner.component';
+import { ErrorBoundaryComponent } from './components/common/error-boundary/error-boundary.component';
+import { OfflineBannerComponent } from './components/common/offline-banner/offline-banner.component';
+import { PwaInstallPromptComponent } from './components/pwa/pwa-install-prompt/pwa-install-prompt.component';
+
+interface AppState {
+  isOnline: boolean;
+  installPrompt: any;
+  isInstalled: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    HeaderComponent,
+    FooterComponent,
+    LoadingSpinnerComponent,
+    ErrorBoundaryComponent,
+    OfflineBannerComponent,
+    PwaInstallPromptComponent
+  ],
+  template: `
+    <div [class]="appClasses()">
+      <app-error-boundary>
+        <app-header
+          [isOnline]="appState().isOnline"
+          [canInstall]="!!appState().installPrompt"
+          (installClick)="handleInstallClick()"
+        ></app-header>
+
+        <main class="main-content" role="main">
+          <app-offline-banner
+            *ngIf="!appState().isOnline"
+            [message]="'You are currently offline. Some features may be limited.'"
+          ></app-offline-banner>
+
+          <app-loading-spinner *ngIf="appState().isLoading"></app-loading-spinner>
+
+          <div *ngIf="appState().error" class="error-container">
+            <h2>Something went wrong</h2>
+            <p>{{ appState().error }}</p>
+            <button (click)="clearError()" class="btn btn-primary">Try Again</button>
+          </div>
+
+          <router-outlet *ngIf="!appState().isLoading && !appState().error"></router-outlet>
+        </main>
+
+        <app-footer></app-footer>
+
+        <app-pwa-install-prompt
+          *ngIf="appState().installPrompt"
+          (install)="handleInstallClick()"
+          (dismiss)="dismissInstallPrompt()"
+        ></app-pwa-install-prompt>
+      </app-error-boundary>
+    </div>
+  `,
+  styles: [`
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease;
+    }
+
+    .app.offline {
+      opacity: 0.9;
+    }
+
+    .app.loading {
+      pointer-events: none;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .error-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+      min-height: 400px;
+    }
+
+    .error-container h2 {
+      color: #dc2626;
+      margin-bottom: 1rem;
+    }
+
+    .error-container p {
+      color: #6b7280;
+      margin-bottom: 1.5rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background-color: {{colorScheme.primary}};
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: {{colorScheme.secondary}};
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .app {
+        font-size: 0.9rem;
+      }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+      .app {
+        background-color: #1a1a1a;
+        color: #ffffff;
+      }
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      .app {
+        transition: none;
+      }
+    }
+  `]
+})
+export class AppComponent implements OnInit, OnDestroy {
+  private readonly router = inject(Router);
+  private readonly meta = inject(Meta);
+  private readonly title = inject(Title);
+  private readonly swUpdate = inject(SwUpdate);
+  private readonly swPush = inject(SwPush);
+  private readonly httpClient = inject(HttpClient);
+
+  {{#if analytics}}
+  private readonly analyticsService = inject(AnalyticsService);
+  {{/if}}
+  {{#if performance}}
+  private readonly performanceService = inject(PerformanceService);
+  {{/if}}
+  {{#if features.includes "notifications"}}
+  private readonly notificationService = inject(NotificationService);
+  {{/if}}
+  {{#if features.includes "dark-mode"}}
+  private readonly themeService = inject(ThemeService);
+  {{/if}}
+
+  private readonly destroy$ = new Subject<void>();
+
+  // Reactive state using signals
+  public appState = signal<AppState>({
+    isOnline: navigator.onLine,
+    installPrompt: null,
+    isInstalled: false,
+    isLoading: false,
+    error: null
+  });
+
+  // Computed properties
+  public appClasses = computed(() => {
+    const state = this.appState();
+    return {
+      'app': true,
+      'offline': !state.isOnline,
+      'loading': state.isLoading,
+      'installed': state.isInstalled
+    };
+  });
+
+  constructor() {
+    // Set up meta tags
+    this.setupMetaTags();
+
+    // Set up effects
+    this.setupEffects();
+  }
+
+  ngOnInit(): void {
+    this.initializeApp();
+    this.setupEventListeners();
+    this.setupServiceWorker();
+    this.setupRouterEvents();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private initializeApp(): void {
+    {{#if analytics}}
+    // Initialize analytics
+    this.analyticsService.track('app_loaded', {
+      framework: '{{framework}}',
+      version: '{{version}}',
+      features: {{json features}},
+      timestamp: new Date().toISOString()
+    });
+    {{/if}}
+
+    {{#if performance}}
+    // Initialize performance monitoring
+    this.performanceService.initialize();
+    {{/if}}
+
+    {{#if features.includes "notifications"}}
+    // Initialize notifications
+    this.notificationService.initialize();
+    {{/if}}
+
+    {{#if features.includes "dark-mode"}}
+    // Initialize theme
+    this.themeService.initialize();
+    {{/if}}
+  }
+
+  private setupMetaTags(): void {
+    this.title.setTitle('{{businessName}} - {{description}}');
+    this.meta.updateTag({ name: 'description', content: '{{description}}' });
+    this.meta.updateTag({ name: 'keywords', content: '{{businessName}}, {{industry}}, {{#each seoStrategy.keywords}}{{this}}, {{/each}}pwa' });
+    this.meta.updateTag({ name: 'author', content: '{{businessName}}' });
+    this.meta.updateTag({ name: 'theme-color', content: '{{colorScheme.primary}}' });
+  }
+
+  private setupEffects(): void {
+    // Effect for online status changes
+    effect(() => {
+      const isOnline = this.appState().isOnline;
+      console.log('Network status changed:', isOnline ? 'online' : 'offline');
+
+      {{#if analytics}}
+      this.analyticsService.track('network_status_change', { isOnline });
+      {{/if}}
+    });
+
+    // Effect for installation status changes
+    effect(() => {
+      const isInstalled = this.appState().isInstalled;
+      if (isInstalled) {
+        console.log('PWA installed successfully');
+        {{#if analytics}}
+        this.analyticsService.track('pwa_installed');
+        {{/if}}
+      }
+    });
+  }
+
+  private setupEventListeners(): void {
+    // Network status monitoring
+    merge(
+      fromEvent(window, 'online').pipe(filter(() => true)),
+      fromEvent(window, 'offline').pipe(filter(() => false))
+    ).pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((isOnline: boolean) => {
+      this.appState.update(state => ({
+        ...state,
+        isOnline
+      }));
+    });
+
+    // PWA install prompt
+    fromEvent(window, 'beforeinstallprompt').pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((event: any) => {
+      event.preventDefault();
+      this.appState.update(state => ({
+        ...state,
+        installPrompt: event
+      }));
+    });
+
+    // PWA installed
+    fromEvent(window, 'appinstalled').pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.appState.update(state => ({
+        ...state,
+        isInstalled: true,
+        installPrompt: null
+      }));
+    });
+
+    // Global error handling
+    fromEvent(window, 'error').pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((event: any) => {
+      this.handleError(event.error);
+    });
+
+    fromEvent(window, 'unhandledrejection').pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((event: any) => {
+      this.handleError(new Error(event.reason));
+    });
+  }
+
+  private setupServiceWorker(): void {
+    if (this.swUpdate.isEnabled) {
+      // Check for updates
+      this.swUpdate.versionUpdates.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe(event => {
+        if (event.type === 'VERSION_READY') {
+          console.log('New version available');
+          {{#if features.includes "notifications"}}
+          this.notificationService.showNotification(
+            'Update Available',
+            'A new version of the app is available. Refresh to update.',
+            'update'
+          );
+          {{/if}}
+        }
+      });
+
+      // Check for updates periodically
+      setInterval(() => {
+        this.swUpdate.checkForUpdate();
+      }, 60000); // Check every minute
+    }
+
+    // Push notifications
+    if (this.swPush.isEnabled) {
+      this.swPush.notificationClicks.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe(event => {
+        console.log('Notification clicked:', event);
+        {{#if analytics}}
+        this.analyticsService.track('notification_clicked', event);
+        {{/if}}
+      });
+    }
+  }
+
+  private setupRouterEvents(): void {
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd),
+      takeUntil(this.destroy$)
+    ).subscribe((event: NavigationEnd) => {
+      {{#if analytics}}
+      this.analyticsService.track('page_view', {
+        page: event.urlAfterRedirects,
+        title: this.title.getTitle()
+      });
+      {{/if}}
+    });
+  }
+
+  public async handleInstallClick(): Promise<void> {
+    const installPrompt = this.appState().installPrompt;
+    if (installPrompt) {
+      try {
+        const result = await installPrompt.prompt();
+        console.log('Install prompt result:', result);
+
+        {{#if analytics}}
+        this.analyticsService.track('pwa_install_prompt_result', {
+          outcome: result.outcome
+        });
+        {{/if}}
+
+        this.appState.update(state => ({
+          ...state,
+          installPrompt: null
+        }));
+      } catch (error) {
+        console.error('Error installing PWA:', error);
+        this.handleError(error as Error);
+      }
+    }
+  }
+
+  public dismissInstallPrompt(): void {
+    this.appState.update(state => ({
+      ...state,
+      installPrompt: null
+    }));
+
+    {{#if analytics}}
+    this.analyticsService.track('pwa_install_prompt_dismissed');
+    {{/if}}
+  }
+
+  public clearError(): void {
+    this.appState.update(state => ({
+      ...state,
+      error: null
+    }));
+  }
+
+  private handleError(error: Error): void {
+    console.error('App Error:', error);
+
+    this.appState.update(state => ({
+      ...state,
+      error: error.message || 'An unexpected error occurred'
+    }));
+
+    {{#if analytics}}
+    this.analyticsService.track('app_error', {
+      error: error.message,
+      stack: error.stack
+    });
+    {{/if}}
+  }
+}

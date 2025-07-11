@@ -200,7 +200,7 @@ const DocsPage: React.FC = () => {
                       size="lg"
                       onClick={() =>
                         window.open(
-                          "https://github.com/your-org/pwa-generator",
+                          "https://github.com/MarkHays/pwa-template-generator",
                           "_blank",
                         )
                       }
@@ -739,7 +739,7 @@ npm run deploy:azure`}
                                   Check our{" "}
                                   <Link
                                     color="blue.500"
-                                    href="https://github.com/your-org/pwa-generator/issues"
+                                    href="https://github.com/MarkHays/pwa-template-generator/issues"
                                     isExternal
                                   >
                                     GitHub Issues
@@ -822,7 +822,7 @@ npm run deploy:azure`}
                       size="lg"
                       onClick={() =>
                         window.open(
-                          "https://github.com/your-org/pwa-generator",
+                          "https://github.com/MarkHays/pwa-template-generator",
                           "_blank",
                         )
                       }

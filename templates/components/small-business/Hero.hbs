@@ -1,0 +1,418 @@
+<section class="hero {{#if heroBackground}}hero--with-background{{/if}}" {{#if heroBackground}}style="background-image: url('{{heroBackground}}');"{{/if}}>
+  <div class="hero__overlay">
+    <div class="container">
+      <div class="hero__content">
+        <div class="hero__text">
+          {{#if tagline}}
+          <p class="hero__tagline">{{tagline}}</p>
+          {{/if}}
+
+          <h1 class="hero__title">
+            {{#if content.heroTitle}}
+            {{content.heroTitle}}
+            {{else}}
+            Welcome to {{businessName}}
+            {{/if}}
+          </h1>
+
+          <p class="hero__subtitle">
+            {{#if content.heroSubtitle}}
+            {{content.heroSubtitle}}
+            {{else}}
+            Professional {{industry}} services you can trust
+            {{/if}}
+          </p>
+
+          {{#if content.heroDescription}}
+          <p class="hero__description">
+            {{content.heroDescription}}
+          </p>
+          {{/if}}
+
+          <div class="hero__actions">
+            <a href="#contact" class="btn btn--primary btn--large hero__cta">
+              {{#if content.ctaText}}
+              {{content.ctaText}}
+              {{else}}
+              Get Started Today
+              {{/if}}
+            </a>
+
+            {{#if phone}}
+            <a href="tel:{{phone}}" class="btn btn--secondary btn--large hero__cta">
+              <span class="btn__icon">📞</span>
+              Call Now
+            </a>
+            {{/if}}
+          </div>
+
+          {{#if features.includes "trust-indicators"}}
+          <div class="hero__trust-indicators">
+            {{#if yearsInBusiness}}
+            <div class="trust-indicator">
+              <span class="trust-indicator__number">{{yearsInBusiness}}+</span>
+              <span class="trust-indicator__text">Years Experience</span>
+            </div>
+            {{/if}}
+
+            {{#if customersServed}}
+            <div class="trust-indicator">
+              <span class="trust-indicator__number">{{customersServed}}+</span>
+              <span class="trust-indicator__text">Happy Customers</span>
+            </div>
+            {{/if}}
+
+            {{#if projectsCompleted}}
+            <div class="trust-indicator">
+              <span class="trust-indicator__number">{{projectsCompleted}}+</span>
+              <span class="trust-indicator__text">Projects Completed</span>
+            </div>
+            {{/if}}
+          </div>
+          {{/if}}
+        </div>
+
+        {{#if heroImage}}
+        <div class="hero__image">
+          <img
+            src="{{heroImage}}"
+            alt="{{businessName}} - {{industry}} services"
+            class="hero__image-element"
+            loading="eager"
+            width="600"
+            height="400"
+          />
+        </div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.hero {
+  position: relative;
+  padding: 4rem 0;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, {{colorScheme.primary}}10 0%, {{colorScheme.secondary}}10 100%);
+  overflow: hidden;
+}
+
+.hero--with-background {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: white;
+}
+
+.hero__overlay {
+  position: relative;
+  width: 100%;
+  z-index: 2;
+}
+
+.hero--with-background .hero__overlay::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.6) 100%);
+  z-index: -1;
+}
+
+.hero__content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.hero__text {
+  text-align: center;
+}
+
+.hero__tagline {
+  font-size: 1rem;
+  font-weight: 600;
+  color: {{colorScheme.primary}};
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hero--with-background .hero__tagline {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero__title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+  color: #1a1a1a;
+}
+
+.hero--with-background .hero__title {
+  color: white;
+}
+
+.hero__subtitle {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 1.5rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero--with-background .hero__subtitle {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero__description {
+  font-size: 1.1rem;
+  color: #777;
+  margin-bottom: 2rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero--with-background .hero__description {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.hero__actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.hero__cta {
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.hero__trust-indicators {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.trust-indicator {
+  text-align: center;
+  min-width: 120px;
+}
+
+.trust-indicator__number {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: {{colorScheme.primary}};
+  margin-bottom: 0.25rem;
+}
+
+.hero--with-background .trust-indicator__number {
+  color: white;
+}
+
+.trust-indicator__text {
+  font-size: 0.9rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hero--with-background .trust-indicator__text {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.hero__image {
+  position: relative;
+  text-align: center;
+}
+
+.hero__image-element {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.hero__image-element:hover {
+  transform: translateY(-5px);
+}
+
+/* Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.btn--large {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+}
+
+.btn--primary {
+  background: {{colorScheme.primary}};
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn--primary:hover {
+  background: {{colorScheme.secondary}};
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn--secondary {
+  background: transparent;
+  color: {{colorScheme.primary}};
+  border: 2px solid {{colorScheme.primary}};
+}
+
+.btn--secondary:hover {
+  background: {{colorScheme.primary}};
+  color: white;
+  transform: translateY(-2px);
+}
+
+.hero--with-background .btn--secondary {
+  color: white;
+  border-color: white;
+}
+
+.hero--with-background .btn--secondary:hover {
+  background: white;
+  color: {{colorScheme.primary}};
+}
+
+.btn__icon {
+  font-size: 1.2em;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  .hero {
+    padding: 5rem 0;
+  }
+
+  .hero__content {
+    grid-template-columns: 1fr 1fr;
+    text-align: left;
+  }
+
+  .hero__text {
+    text-align: left;
+  }
+
+  .hero__actions {
+    justify-content: flex-start;
+  }
+
+  .hero__trust-indicators {
+    justify-content: flex-start;
+  }
+
+  .hero__title {
+    font-size: 3rem;
+  }
+
+  .hero__subtitle {
+    font-size: 1.375rem;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .hero__description {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero__title {
+    font-size: 3.5rem;
+  }
+
+  .hero__trust-indicators {
+    gap: 3rem;
+  }
+
+  .trust-indicator {
+    min-width: 140px;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .hero__image-element,
+  .btn,
+  .hero__cta {
+    transition: none;
+  }
+
+  .hero__image-element:hover,
+  .btn:hover,
+  .hero__cta:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .hero {
+    border: 1px solid;
+  }
+
+  .btn--primary,
+  .btn--secondary {
+    border: 2px solid;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .hero:not(.hero--with-background) {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  }
+
+  .hero__title {
+    color: #ffffff;
+  }
+
+  .hero__subtitle {
+    color: #cccccc;
+  }
+
+  .hero__description {
+    color: #aaaaaa;
+  }
+
+  .trust-indicator__text {
+    color: #aaaaaa;
+  }
+}
+</style>

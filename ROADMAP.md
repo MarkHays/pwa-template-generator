@@ -553,7 +553,7 @@
 ## 📞 **Get Involved**
 
 ### **For Developers**
-- **GitHub**: [github.com/your-org/pwa-generator](https://github.com/your-org/pwa-generator)
+- **GitHub**: [github.com/MarkHays/pwa-template-generator](https://github.com/MarkHays/pwa-template-generator)
 - **Discord**: [discord.gg/pwa-generator](https://discord.gg/pwa-generator)
 - **Documentation**: [docs.pwa-generator.com](https://docs.pwa-generator.com)
 
