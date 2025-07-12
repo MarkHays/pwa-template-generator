@@ -243,57 +243,102 @@ const BuilderPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <Card bg={cardBg} shadow="lg">
-              <CardBody py={6}>
-                <VStack spacing={6}>
-                  <Progress
-                    value={(currentStep / (steps.length - 1)) * 100}
-                    size="lg"
-                    colorScheme="blue"
-                    w="full"
-                    borderRadius="full"
-                  />
+            <Card bg={cardBg} shadow="lg" overflow="hidden">
+              <CardBody py={{ base: 4, md: 6 }} px={{ base: 4, md: 6 }}>
+                <VStack spacing={{ base: 4, md: 6 }}>
+                  <Box w="full">
+                    <Text
+                      fontSize="xs"
+                      color="gray.500"
+                      mb={2}
+                      textAlign="center"
+                    >
+                      Progress:{" "}
+                      {Math.round((currentStep / (steps.length - 1)) * 100)}%
+                    </Text>
+                    <Progress
+                      value={(currentStep / (steps.length - 1)) * 100}
+                      size="lg"
+                      colorScheme="blue"
+                      w="full"
+                      borderRadius="full"
+                      bg="gray.100"
+                      sx={{
+                        "& > div": {
+                          transition: "width 0.3s ease-in-out",
+                        },
+                      }}
+                    />
+                  </Box>
 
                   {/* Step Indicator */}
-                  <Stepper
-                    index={activeStep}
-                    colorScheme="blue"
+                  <Box w="full" overflow="auto" pb={2}>
+                    <Stepper
+                      index={activeStep}
+                      colorScheme="blue"
+                      w="full"
+                      orientation="horizontal"
+                      size={{ base: "sm", md: "md" }}
+                      gap={{ base: 1, md: 2 }}
+                    >
+                      {steps.map((step, index) => (
+                        <Step key={index} flex="1">
+                          <StepIndicator
+                            cursor={
+                              index <= currentStep ? "pointer" : "default"
+                            }
+                            onClick={() => handleStepClick(index)}
+                          >
+                            <StepStatus
+                              complete={<StepIcon />}
+                              incomplete={<StepNumber />}
+                              active={<StepNumber />}
+                            />
+                          </StepIndicator>
+
+                          <Box
+                            ml={{ base: 1, md: 2 }}
+                            minW={0}
+                            overflow="hidden"
+                            display={{ base: "none", md: "block" }}
+                          >
+                            <StepTitle
+                              fontSize={{ base: "xs", md: "sm" }}
+                              noOfLines={1}
+                            >
+                              {step.title}
+                            </StepTitle>
+                            <StepDescription
+                              fontSize="xs"
+                              noOfLines={1}
+                              display={{ base: "none", lg: "block" }}
+                            >
+                              {step.description}
+                            </StepDescription>
+                          </Box>
+
+                          <StepSeparator />
+                        </Step>
+                      ))}
+                    </Stepper>
+                  </Box>
+
+                  {/* Mobile Step Info */}
+                  <Box
+                    display={{ base: "block", md: "none" }}
+                    textAlign="center"
+                    p={3}
+                    bg="blue.50"
+                    borderRadius="md"
                     w="full"
-                    orientation="horizontal"
-                    sx={{
-                      "& .chakra-step": {
-                        display: "inline-flex",
-                        alignItems: "center",
-                        flex: "1 1 0%",
-                      },
-                      "& .chakra-step__separator": {
-                        flex: "1 1 0%",
-                      },
-                    }}
                   >
-                    {steps.map((step, index) => (
-                      <Step key={index}>
-                        <StepIndicator
-                          cursor={index <= currentStep ? "pointer" : "default"}
-                          onClick={() => handleStepClick(index)}
-                          flexShrink={0}
-                        >
-                          <StepStatus
-                            complete={<StepIcon />}
-                            incomplete={<StepNumber />}
-                            active={<StepNumber />}
-                          />
-                        </StepIndicator>
-
-                        <Box flexShrink="0" ml={2}>
-                          <StepTitle>{step.title}</StepTitle>
-                          <StepDescription>{step.description}</StepDescription>
-                        </Box>
-
-                        <StepSeparator />
-                      </Step>
-                    ))}
-                  </Stepper>
+                    <Text fontSize="sm" fontWeight="medium" color="blue.800">
+                      {steps[currentStep]?.title}
+                    </Text>
+                    <Text fontSize="xs" color="blue.600">
+                      {steps[currentStep]?.description}
+                    </Text>
+                  </Box>
                 </VStack>
               </CardBody>
             </Card>
