@@ -1408,7 +1408,7 @@ export default defineConfig({
     <meta name="description" content="${context.description}" />
     <meta name="theme-color" content="#667eea" />
     <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
     <title>${context.projectName}</title>
   </head>
   <body>
@@ -1427,17 +1427,41 @@ export default defineConfig({
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 
-// Register service worker
-if ('serviceWorker' in navigator) {
+// Register service worker with development-friendly error handling
+if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
   window.addEventListener('load', () => {
+    // Clear old service worker caches first
+    if ('caches' in window) {
+      caches.keys().then((cacheNames) => {
+        cacheNames.forEach((cacheName) => {
+          if (cacheName.includes('pwa-cache') || cacheName.includes('pwa-generator')) {
+            caches.delete(cacheName);
+            console.log('🧹 Cleared old cache:', cacheName);
+          }
+        });
+      });
+    }
+
     navigator.serviceWorker.register('/sw.js')
       .then((registration) => {
-        console.log('SW registered: ', registration);
+        console.log('✅ Service Worker registered successfully:', registration.scope);
+
+        // Listen for updates
+        registration.addEventListener('updatefound', () => {
+          console.log('🔄 Service Worker update found');
+        });
       })
-      .catch((registrationError) => {
-        console.log('SW registration failed: ', registrationError);
+      .catch((error) => {
+        // Only log as warning in development, not as error
+        if (window.location.hostname === 'localhost') {
+          console.warn('⚠️ Service Worker registration failed (development):', error.message);
+        } else {
+          console.error('❌ Service Worker registration failed:', error);
+        }
       });
   });
+} else if ('serviceWorker' in navigator) {
+  console.info('ℹ️ Service Worker not registered (requires HTTPS or localhost)');
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -1479,13 +1503,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           purpose: "any",
         },
         {
-          src: "/icon-192.png",
+          src: "/icon-192x192.png",
           sizes: "192x192",
           type: "image/png",
           purpose: "any maskable",
         },
         {
-          src: "/icon-512.png",
+          src: "/icon-512x512.png",
           sizes: "512x512",
           type: "image/png",
           purpose: "any maskable",
@@ -1539,127 +1563,57 @@ Generated with PWA Template Generator v2.0
    * Generate service worker
    */
   async generateServiceWorker(context) {
-    const serviceWorkerContent = `// Service Worker
-const CACHE_NAME = 'pwa-generator-static-v1';
-const DYNAMIC_CACHE = 'pwa-generator-dynamic-v1';
+    const serviceWorkerContent = `// Minimal Development-Only Service Worker
+// This SW is designed to not interfere with development
 
-// Install event
-self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...');
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Caching core files');
-        // Cache files individually with error handling
-        const cachePromises = [
-          '/',
-          '/manifest.json',
-          '/favicon.svg'
-        ].map(url => {
-          return cache.add(url).catch(err => {
-            console.warn('Failed to cache:', url, err);
-            return Promise.resolve(); // Continue even if one fails
-          });
-        });
-        return Promise.all(cachePromises);
-      })
-      .then(() => {
-        console.log('Service Worker installation complete');
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error('Service Worker installation failed:', error);
-      })
-  );
+self.addEventListener('install', () => {
+  // Install immediately without waiting
+  self.skipWaiting();
 });
 
-// Activate event
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating...');
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME && cacheName !== DYNAMIC_CACHE) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    }).then(() => {
-      console.log('Service Worker activation complete');
-      return self.clients.claim();
-    })
-  );
+  // Take control immediately
+  event.waitUntil(self.clients.claim());
 });
 
-// Fetch event
 self.addEventListener('fetch', (event) => {
+  // Skip ALL development-related requests to avoid interference
+  const url = event.request.url;
+
+  // Skip Vite development files
+  if (url.includes('/@vite/') ||
+      url.includes('/@react-refresh') ||
+      url.includes('/@fs/') ||
+      url.includes('?import') ||
+      url.includes('?direct') ||
+      url.includes('?worker') ||
+      url.includes('hot-update') ||
+      url.includes('node_modules') ||
+      url.includes('.vite/')) {
+    return; // Let browser handle these normally
+  }
+
   // Skip non-GET requests
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // Skip chrome-extension and other non-http requests
-  if (!event.request.url.startsWith('http')) {
-    return;
+  // For everything else, just pass through to network
+  // No caching in development to avoid conflicts
+  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    return; // Skip all caching in development
   }
 
-  // Skip hot reload requests in development
-  if (event.request.url.includes('/@vite/') ||
-      event.request.url.includes('/@react-refresh') ||
-      event.request.url.includes('?import') ||
-      event.request.url.includes('?direct')) {
-    return;
-  }
-
+  // Only cache in production
   event.respondWith(
-    caches.match(event.request)
-      .then((cachedResponse) => {
-        if (cachedResponse) {
-          console.log('Service Worker: Serving from cache:', event.request.url);
-          return cachedResponse;
-        }
-
-        console.log('Service Worker: Fetching from network:', event.request.url);
-        return fetch(event.request)
-          .then((response) => {
-            // Only cache successful responses for static assets
-            if (response.status === 200 && response.type === 'basic') {
-              // Only cache certain file types to avoid caching issues
-              const url = new URL(event.request.url);
-              if (url.pathname.endsWith('.js') ||
-                  url.pathname.endsWith('.css') ||
-                  url.pathname.endsWith('.png') ||
-                  url.pathname.endsWith('.svg') ||
-                  url.pathname.endsWith('.json')) {
-                const responseClone = response.clone();
-                caches.open(DYNAMIC_CACHE)
-                  .then((cache) => {
-                    console.log('Service Worker: Caching dynamic resource:', event.request.url);
-                    cache.put(event.request, responseClone);
-                  })
-                  .catch(err => {
-                    console.warn('Failed to cache resource:', event.request.url, err);
-                  });
-              }
-            }
-            return response;
-          })
-          .catch((error) => {
-            console.warn('Fetch failed:', event.request.url, error);
-            // Return offline page for navigation requests
-            if (event.request.mode === 'navigate') {
-              return caches.match('/').then(response => {
-                return response || new Response('Offline', {
-                  status: 200,
-                  headers: { 'Content-Type': 'text/html' }
-                });
-              });
-            }
-            return new Response('Network error', { status: 503 });
-          });
-      })
+    fetch(event.request).catch(() => {
+      // Simple offline fallback only for navigation
+      if (event.request.mode === 'navigate') {
+        return new Response('App offline', {
+          headers: { 'Content-Type': 'text/html' }
+        });
+      }
+    })
   );
 });`;
 
@@ -1683,9 +1637,9 @@ self.addEventListener('fetch', (event) => {
 
     // Create proper PNG placeholders with color
     const createPNGIcon = (size) => {
-      // Create a simple colored square PNG (32x32 blue square)
+      // Use a minimal but valid 1x1 transparent PNG
       const pngData =
-        "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAb0lEQVRYhe2WQQ6AIAwEy/s/2sSEeCBNk1JaLnshJE1md6e0KQEA/kqMsfYHruvOFdJaBBJKUJdJx7vfNb5/nZqoRAcvQ3EGhxJHw5FKGgNHKHIUB3CAuQS5T+4RBgd5MlFLgIE8+vdHJm8OTZzSMb0H4QAAAABJRU5ErkJggg==";
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI/hzyku1wAAAABJRU5ErkJggg==";
       return Buffer.from(pngData, "base64");
     };
 
@@ -1704,12 +1658,12 @@ self.addEventListener('fetch', (event) => {
     );
 
     await fs.writeFile(
-      path.join(this.options.outputDir, "public/icon-192.png"),
+      path.join(this.options.outputDir, "public/icon-192x192.png"),
       iconPNG,
     );
 
     await fs.writeFile(
-      path.join(this.options.outputDir, "public/icon-512.png"),
+      path.join(this.options.outputDir, "public/icon-512x512.png"),
       iconPNG,
     );
 
@@ -2018,39 +1972,177 @@ export default ${this.capitalize(pageName)};`;
   getDefaultContent(config) {
     const businessName =
       config.businessName || config.projectName || "My Business";
+    const industry = config.industry || "default";
 
-    return {
-      hero: {
-        title: businessName,
-        subtitle: `Welcome to ${businessName} - Your trusted partner`,
-        cta: "Get Started",
-      },
-      about: {
-        title: `About ${businessName}`,
-        content: `${businessName} is dedicated to providing exceptional service with a focus on quality and customer satisfaction.`,
-        benefits: [
-          "Professional Service",
-          "Quality Solutions",
-          "Customer Focused",
+    const contentMap = {
+      "cyber-security": {
+        hero: {
+          title: `${businessName} - Advanced Cybersecurity Solutions`,
+          subtitle: "Protecting your digital assets with cutting-edge security technology",
+          cta: "Secure Your Business",
+        },
+        about: {
+          title: `About ${businessName}`,
+          content: `${businessName} is a leading cybersecurity firm dedicated to protecting organizations from digital threats through innovative security solutions and expert consultation.`,
+          benefits: [
+            "Advanced Threat Detection",
+            "24/7 Security Monitoring",
+            "Compliance Expertise",
+          ],
+        },
+        services: [
+          "Security Audits",
+          "Penetration Testing",
+          "Compliance Solutions",
+          "Incident Response",
+          "Security Training",
         ],
+        testimonials: [
+          "Their security audit revealed critical vulnerabilities we didn't know existed. Excellent work!",
+          "Professional team that takes cybersecurity seriously. Our data is now completely secure.",
+          "Best cybersecurity consultants in the business. Highly recommended for enterprise security.",
+        ],
+        contact: {
+          phone: "(555) SEC-URITY",
+          email: "security@cybersecurepro.com",
+          address: "123 Cyber Lane, Tech City",
+          hours: "24/7 Emergency Response",
+        },
       },
-      services: [
-        "Professional Consulting",
-        "Quality Solutions",
-        "Customer Support",
-      ],
-      testimonials: [
-        "Excellent service and professional team!",
-        "Highly recommend for quality work.",
-        "Outstanding results and great communication.",
-      ],
-      contact: {
-        phone: "(555) 123-4567",
-        email: "contact@example.com",
-        address: "123 Main Street, Your City",
-        hours: "Mon-Fri: 9AM-6PM",
+      restaurant: {
+        hero: {
+          title: `Welcome to ${businessName}`,
+          subtitle: "Exceptional dining experience with fresh, locally-sourced ingredients",
+          cta: "Make Reservation",
+        },
+        about: {
+          title: `About ${businessName}`,
+          content: `${businessName} offers an exceptional dining experience with fresh, locally-sourced ingredients and expertly crafted dishes in a warm, welcoming atmosphere.`,
+          benefits: [
+            "Fresh Local Ingredients",
+            "Expert Culinary Team",
+            "Memorable Dining Experience",
+          ],
+        },
+        services: [
+          "Fine Dining",
+          "Catering Services",
+          "Private Events",
+          "Wine Selection",
+        ],
+        testimonials: [
+          "The food was absolutely incredible! Best dining experience in town.",
+          "Amazing atmosphere and exceptional service. Highly recommend!",
+          "Every dish was a masterpiece. Can't wait to come back!",
+        ],
+        contact: {
+          phone: "(555) DINE-HERE",
+          email: "reservations@restaurant.com",
+          address: "123 Culinary Street, Food City",
+          hours: "Tue-Sun: 5PM-10PM",
+        },
+      },
+      technology: {
+        hero: {
+          title: `${businessName} - Innovation at Scale`,
+          subtitle: "Cutting-edge technology solutions for modern businesses",
+          cta: "Start Your Project",
+        },
+        about: {
+          title: `About ${businessName}`,
+          content: `${businessName} delivers innovative technology solutions that help businesses scale and succeed in the digital age through expert development and cutting-edge tools.`,
+          benefits: [
+            "Innovative Solutions",
+            "Scalable Architecture",
+            "Expert Development Team",
+          ],
+        },
+        services: [
+          "Software Development",
+          "Cloud Solutions",
+          "AI & Machine Learning",
+          "DevOps Services",
+        ],
+        testimonials: [
+          "Their technical expertise transformed our business operations.",
+          "Outstanding development team with innovative solutions.",
+          "Reliable, efficient, and always ahead of the curve.",
+        ],
+        contact: {
+          phone: "(555) TECH-NOW",
+          email: "hello@techcompany.com",
+          address: "123 Innovation Drive, Tech Valley",
+          hours: "Mon-Fri: 9AM-6PM",
+        },
+      },
+      healthcare: {
+        hero: {
+          title: `${businessName} - Your Health, Our Priority`,
+          subtitle: "Comprehensive healthcare services with compassionate care",
+          cta: "Schedule Appointment",
+        },
+        about: {
+          title: `About ${businessName}`,
+          content: `${businessName} provides comprehensive healthcare services with a focus on compassionate, patient-centered care and the latest medical innovations.`,
+          benefits: [
+            "Compassionate Care",
+            "Latest Medical Technology",
+            "Experienced Professionals",
+          ],
+        },
+        services: [
+          "Primary Care",
+          "Specialist Services",
+          "Preventive Care",
+          "Emergency Services",
+        ],
+        testimonials: [
+          "Excellent care and very professional staff.",
+          "They truly care about their patients' wellbeing.",
+          "Best healthcare experience I've ever had.",
+        ],
+        contact: {
+          phone: "(555) HEALTH-1",
+          email: "appointments@healthcare.com",
+          address: "123 Medical Center Blvd, Health City",
+          hours: "Mon-Fri: 8AM-5PM, Emergency: 24/7",
+        },
+      },
+      default: {
+        hero: {
+          title: businessName,
+          subtitle: `Welcome to ${businessName} - Your trusted partner`,
+          cta: "Get Started",
+        },
+        about: {
+          title: `About ${businessName}`,
+          content: `${businessName} is dedicated to providing exceptional service with a focus on quality and customer satisfaction.`,
+          benefits: [
+            "Professional Service",
+            "Quality Solutions",
+            "Customer Focused",
+          ],
+        },
+        services: [
+          "Professional Consulting",
+          "Quality Solutions",
+          "Customer Support",
+        ],
+        testimonials: [
+          "Excellent service and professional team!",
+          "Highly recommend for quality work.",
+          "Outstanding results and great communication.",
+        ],
+        contact: {
+          phone: "(555) 123-4567",
+          email: "contact@example.com",
+          address: "123 Main Street, Your City",
+          hours: "Mon-Fri: 9AM-6PM",
+        },
       },
     };
+
+    return contentMap[industry] || contentMap.default;
   }
 
   /**
@@ -3519,8 +3611,318 @@ ${pageSpecificCSS}
   color: white;
 }`;
 
-      default:
+      case "about":
         return `
+/* About Page Styles */
+.about-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.about-text {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.about-text h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.about-text h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #667eea;
+  margin: 2rem 0 1rem 0;
+}
+
+.about-text p {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: #4a5568;
+  margin-bottom: 1.5rem;
+}
+
+.values-section {
+  background: #f8f9fa;
+  padding: 4rem 0;
+  margin: 4rem -2rem 0 -2rem;
+  border-radius: 12px;
+}
+
+.values-section h2 {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 3rem;
+  letter-spacing: -0.02em;
+}
+
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+  padding: 0 2rem;
+}
+
+.value-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  position: relative;
+  overflow: hidden;
+}
+
+.value-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.value-card:hover::before {
+  transform: scaleX(1);
+}
+
+.value-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+.value-card h3 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+.value-card p {
+  color: #4a5568;
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .about-text h2 {
+    font-size: 2rem;
+  }
+
+  .values-section {
+    margin: 2rem -1rem 0 -1rem;
+    padding: 3rem 0;
+  }
+
+  .values-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 0 1rem;
+  }
+
+  .value-card {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-text h2 {
+    font-size: 1.75rem;
+  }
+
+  .about-text h3 {
+    font-size: 1.25rem;
+  }
+
+  .about-text p {
+    font-size: 1rem;
+  }
+
+  .values-section h2 {
+    font-size: 2rem;
+  }
+}`;
+
+      case "services":
+        return `
+/* Services Page Styles */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.service-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+
+.service-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.service-card:hover::before {
+  transform: scaleX(1);
+}
+
+.service-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+.service-icon {
+  width: 4rem;
+  height: 4rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  font-size: 1.75rem;
+  color: white;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.service-card:hover .service-icon {
+  transform: scale(1.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.service-card h3 {
+  color: #2d3748;
+  margin-bottom: 1rem;
+  font-size: 1.375rem;
+  font-weight: 600;
+}
+
+.service-card p {
+  color: #4a5568;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  flex-grow: 1;
+  font-size: 1rem;
+}
+
+.service-features {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.service-features li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+.service-features li::before {
+  content: '✓';
+  color: #48bb78;
+  font-weight: 600;
+  width: 1rem;
+  text-align: center;
+}
+
+.service-price {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  background: #f7fafc;
+  border-radius: 8px;
+}
+
+.service-cta {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  margin-top: auto;
+}
+
+.service-cta:hover {
+  background: #5a67d8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .services-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .service-card {
+    padding: 1.5rem;
+  }
+
+  .service-icon {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .service-card {
+    padding: 1.25rem;
+  }
+
+  .service-card h3 {
+    font-size: 1.25rem;
+  }
+
+  .service-features {
+    text-align: center;`
 /* Generic Page Styles */
 .page-content {
   max-width: 1200px;

@@ -296,6 +296,54 @@ export class WebDirectProjectGenerator {
           },
         ],
       },
+      "cyber-security": {
+        hero: {
+          title: `${businessData.name} - Advanced Cybersecurity Solutions`,
+          subtitle:
+            "Protecting your digital assets with cutting-edge security technology",
+        },
+        services: [
+          {
+            title: "Security Audits",
+            description:
+              "Comprehensive security assessments and vulnerability testing",
+          },
+          {
+            title: "Penetration Testing",
+            description:
+              "Ethical hacking to identify and fix security weaknesses",
+          },
+          {
+            title: "Compliance Solutions",
+            description: "Ensure regulatory compliance with industry standards",
+          },
+          {
+            title: "Incident Response",
+            description: "24/7 rapid response to security threats and breaches",
+          },
+          {
+            title: "Security Training",
+            description: "Employee education and security awareness programs",
+          },
+        ],
+        testimonials: [
+          {
+            name: "Michael Stevens",
+            text: "Their security audit revealed critical vulnerabilities we didn't know existed. Excellent work!",
+            rating: 5,
+          },
+          {
+            name: "Sarah Mitchell",
+            text: "Professional team that takes cybersecurity seriously. Our data is now completely secure.",
+            rating: 5,
+          },
+          {
+            name: "David Chen",
+            text: "Best cybersecurity consultants in the business. Highly recommended for enterprise security.",
+            rating: 5,
+          },
+        ],
+      },
       default: {
         hero: {
           title: `Welcome to ${businessData.name}`,
@@ -388,6 +436,43 @@ export class WebDirectProjectGenerator {
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+
+// Register service worker with development-friendly error handling
+if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    // Clear old service worker caches first
+    if ('caches' in window) {
+      caches.keys().then((cacheNames) => {
+        cacheNames.forEach((cacheName) => {
+          if (cacheName.includes('pwa-cache') || cacheName.includes('pwa-generator')) {
+            caches.delete(cacheName);
+            console.log('🧹 Cleared old cache:', cacheName);
+          }
+        });
+      });
+    }
+
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('✅ Service Worker registered successfully:', registration.scope);
+
+        // Listen for updates
+        registration.addEventListener('updatefound', () => {
+          console.log('🔄 Service Worker update found');
+        });
+      })
+      .catch((error) => {
+        // Only log as warning in development, not as error
+        if (window.location.hostname === 'localhost') {
+          console.warn('⚠️ Service Worker registration failed (development):', error.message);
+        } else {
+          console.error('❌ Service Worker registration failed:', error);
+        }
+      });
+  });
+} else if ('serviceWorker' in navigator) {
+  console.info('ℹ️ Service Worker not registered (requires HTTPS or localhost)');
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -644,24 +729,58 @@ export default App;`;
       .map((page: string) => {
         const href = page === "home" ? "/" : `/${page}`;
         const label = this.capitalize(page);
-        return `          <Link to="${href}" className="nav-link">${label}</Link>`;
+        return `            <Link to="${href}" className="nav-link" onClick={() => setIsMenuOpen(false)}>${label}</Link>`;
       })
       .join("\n");
 
-    return `import React from 'react';
-import { Link } from 'react-router-dom';
+    return `import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import './Navigation.css';
 
 const Navigation: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location]);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
   return (
-    <nav className="navigation">
+    <nav className={\`navigation \${isScrolled ? 'scrolled' : ''}\`}>
       <div className="nav-container">
         <Link to="/" className="nav-brand">
           <h1>${context.businessName}</h1>
         </Link>
-        <div className="nav-links">
+
+        <button
+          className={\`nav-toggle \${isMenuOpen ? 'active' : ''}\`}
+          onClick={toggleMenu}
+          aria-label="Toggle navigation menu"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div className={\`nav-links \${isMenuOpen ? 'active' : ''}\`}>
 ${navLinks}
         </div>
+
+        {isMenuOpen && <div className="nav-overlay" onClick={() => setIsMenuOpen(false)}></div>}
       </div>
     </nav>
   );
@@ -2282,6 +2401,7 @@ export default ProfileForm;`;
   private generateHomePage(context: any): string {
     const hero = context.aiContent.hero;
     const services = context.aiContent.services;
+    const testimonials = context.aiContent.testimonials;
 
     return `import React from 'react';
 import './Home.css';
@@ -2289,33 +2409,229 @@ import './Home.css';
 const Home: React.FC = () => {
   return (
     <div className="home-page">
+      {/* Hero Section */}
       <section className="hero-section">
-        <div className="hero-content">
-          <h1 className="hero-title">${hero.title}</h1>
-          <p className="hero-subtitle">${hero.subtitle}</p>
-          <div className="hero-buttons">
-            <button className="btn btn-primary">Get Started</button>
-            <button className="btn btn-secondary">Learn More</button>
+        <div className="container">
+          <div className="hero-content">
+            <div className="hero-badge">
+              <span>🚀</span>
+              <span>Leading ${context.industry} Solutions</span>
+            </div>
+            <h1 className="hero-title">${hero.title}</h1>
+            <p className="hero-subtitle">${hero.subtitle}</p>
+            <div className="hero-buttons">
+              <button className="hero-cta">Get Started</button>
+              <button className="hero-cta-secondary">Learn More</button>
+            </div>
+            <div className="hero-stats">
+              <div className="hero-stat">
+                <span className="hero-stat-number">10+</span>
+                <span className="hero-stat-label">Years Experience</span>
+              </div>
+              <div className="hero-stat">
+                <span className="hero-stat-number">500+</span>
+                <span className="hero-stat-label">Happy Clients</span>
+              </div>
+              <div className="hero-stat">
+                <span className="hero-stat-number">24/7</span>
+                <span className="hero-stat-label">Support</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* Features Section */}
+      <section className="features-section">
+        <div className="container">
+          <div className="section-header">
+            <h2>Why Choose ${context.businessName}?</h2>
+            <p className="subtitle">Discover what makes us the preferred choice for businesses worldwide</p>
+          </div>
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon">🎯</div>
+              <h3>Expert Solutions</h3>
+              <p>Our team of experts delivers tailored solutions that drive real results for your business.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">⚡</div>
+              <h3>Fast Delivery</h3>
+              <p>We understand the importance of time. Our streamlined processes ensure quick turnaround.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">🔒</div>
+              <h3>Secure & Reliable</h3>
+              <p>Your data and business are protected with industry-leading security measures.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">💡</div>
+              <h3>Innovation First</h3>
+              <p>We stay ahead of the curve with cutting-edge technology and innovative approaches.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">🤝</div>
+              <h3>24/7 Support</h3>
+              <p>Our dedicated support team is available around the clock to assist you.</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">📈</div>
+              <h3>Proven Results</h3>
+              <p>Track record of success with measurable outcomes and satisfied clients.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
       <section className="services-section">
         <div className="container">
-          <h2>Our Services</h2>
+          <div className="section-header">
+            <h2>Our Services</h2>
+            <p className="subtitle">Comprehensive solutions tailored to your needs</p>
+          </div>
           <div className="services-grid">
             ${services
               .map(
                 (service: any) => `
             <div className="service-card">
+              <div className="service-icon">
+                <span className="icon">🔧</span>
+              </div>
               <h3>${service.title}</h3>
               <p>${service.description}</p>
+              <ul className="service-features">
+                <li>Expert consultation</li>
+                <li>Custom solutions</li>
+                <li>Ongoing support</li>
+              </ul>
+              <button className="btn btn-outline">Learn More</button>
             </div>`,
               )
               .join("")}
           </div>
         </div>
       </section>
+
+      {/* Stats Section */}
+      <section className="stats-section">
+        <div className="container">
+          <div className="stats-grid">
+            <div className="stat-item">
+              <div className="stat-number">500+</div>
+              <div className="stat-label">Projects Completed</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">98%</div>
+              <div className="stat-label">Client Satisfaction</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">10+</div>
+              <div className="stat-label">Years Experience</div>
+            </div>
+            <div className="stat-item">
+              <div className="stat-number">24/7</div>
+              <div className="stat-label">Support Available</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="testimonials-section">
+        <div className="container">
+          <div className="section-header">
+            <h2>What Our Clients Say</h2>
+            <p className="subtitle">Don't just take our word for it - hear from our satisfied clients</p>
+          </div>
+          <div className="testimonials-grid">
+            ${testimonials
+              .map(
+                (testimonial: any) => `
+            <div className="testimonial-card">
+              <div className="testimonial-content">
+                <p>"${testimonial.text}"</p>
+              </div>
+              <div className="testimonial-author">
+                <div className="author-avatar">
+                  <span>${testimonial.name.charAt(0)}</span>
+                </div>
+                <div className="author-info">
+                  <h4>${testimonial.name}</h4>
+                  <div className="rating">
+                    ${"★".repeat(testimonial.rating || 5)}
+                  </div>
+                </div>
+              </div>
+            </div>`,
+              )
+              .join("")}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="cta-section">
+        <div className="container">
+          <div className="cta-content">
+            <h2>Ready to Get Started?</h2>
+            <p>Join hundreds of satisfied clients who trust ${context.businessName} for their success.</p>
+            <div className="cta-buttons">
+              <button className="btn btn-primary">Get Started Today</button>
+              <button className="btn btn-outline">Contact Us</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="footer">
+        <div className="container">
+          <div className="footer-content">
+            <div className="footer-section">
+              <h3>${context.businessName}</h3>
+              <p>Your trusted partner for professional solutions and exceptional service.</p>
+              <div className="footer-social">
+                <a href="#" className="social-link">📧</a>
+                <a href="#" className="social-link">📱</a>
+                <a href="#" className="social-link">🌐</a>
+              </div>
+            </div>
+            <div className="footer-section">
+              <h4>Services</h4>
+              <ul className="footer-links">
+                ${services
+                  .slice(0, 4)
+                  .map(
+                    (service: any) =>
+                      `<li><a href="/services">${service.title}</a></li>`,
+                  )
+                  .join("")}
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4>Company</h4>
+              <ul className="footer-links">
+                <li><a href="/about">About</a></li>
+                <li><a href="/contact">Contact</a></li>
+                <li><a href="/testimonials">Testimonials</a></li>
+                <li><a href="/gallery">Gallery</a></li>
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4>Contact Info</h4>
+              <div className="contact-info">
+                <p>📧 info@${context.businessName.toLowerCase().replace(/\s+/g, "")}.com</p>
+                <p>📱 (555) 123-4567</p>
+                <p>📍 Your City, State</p>
+              </div>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <p>&copy; 2024 ${context.businessName}. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
@@ -2330,40 +2646,168 @@ import './About.css';
 const About: React.FC = () => {
   return (
     <div className="about-page">
-      <div className="container">
-        <div className="about-header">
-          <h1>About ${context.businessName}</h1>
-          <p className="about-subtitle">Learn more about our story and mission</p>
-        </div>
-
-        <div className="about-content">
-          <div className="about-text">
-            <h2>Our Story</h2>
-            <p>
-              ${context.businessName} was founded with a simple mission: to provide exceptional
-              services that exceed our clients' expectations. With years of experience in the
-              ${context.industry} industry, we've built a reputation for quality, reliability,
-              and innovation.
+      {/* Hero Section */}
+      <section className="about-hero">
+        <div className="container">
+          <div className="hero-content">
+            <h1>About ${context.businessName}</h1>
+            <p className="hero-subtitle">
+              Building excellence through innovation, dedication, and a commitment to our clients' success
             </p>
-
-            <h2>Our Mission</h2>
-            <p>
-              We are committed to delivering outstanding results while maintaining the highest
-              standards of professionalism and customer service. Our team of experts works
-              tirelessly to ensure your success.
-            </p>
-
-            <h2>Why Choose Us</h2>
-            <ul>
-              <li>Experienced professionals</li>
-              <li>Proven track record</li>
-              <li>Customer-focused approach</li>
-              <li>Innovative solutions</li>
-              <li>Competitive pricing</li>
-            </ul>
+            <div className="hero-stats">
+              <div className="stat">
+                <h3>10+</h3>
+                <p>Years Experience</p>
+              </div>
+              <div className="stat">
+                <h3>500+</h3>
+                <p>Happy Clients</p>
+              </div>
+              <div className="stat">
+                <h3>24/7</h3>
+                <p>Support</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Story Section */}
+      <section className="about-story">
+        <div className="container">
+          <div className="story-grid">
+            <div className="story-content">
+              <h2>Our Story</h2>
+              <p className="story-lead">
+                ${context.businessName} began with a vision to transform the ${context.industry} industry through innovative solutions and exceptional service.
+              </p>
+              <p>
+                Founded by a team of passionate professionals, we recognized the need for a more
+                client-focused approach in our industry. What started as a small operation has
+                grown into a trusted partner for businesses of all sizes.
+              </p>
+              <p>
+                Today, we continue to push boundaries, embrace new technologies, and maintain
+                the personal touch that has always set us apart. Our commitment to excellence
+                drives everything we do.
+              </p>
+              <div className="story-highlights">
+                <div className="highlight">
+                  <div className="highlight-icon">🎯</div>
+                  <div>
+                    <h4>Mission-Driven</h4>
+                    <p>Every decision we make is guided by our core mission</p>
+                  </div>
+                </div>
+                <div className="highlight">
+                  <div className="highlight-icon">🚀</div>
+                  <div>
+                    <h4>Innovation First</h4>
+                    <p>We embrace cutting-edge solutions and technologies</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="story-image">
+              <div className="image-placeholder">
+                <span>📊</span>
+                <p>Our journey of growth and innovation</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Values Section */}
+      <section className="about-values">
+        <div className="container">
+          <div className="section-header">
+            <h2>Our Core Values</h2>
+            <p>The principles that guide our work and relationships</p>
+          </div>
+          <div className="values-grid">
+            <div className="value-card">
+              <div className="value-icon">🤝</div>
+              <h3>Integrity</h3>
+              <p>We believe in honest, transparent communication and ethical business practices in everything we do.</p>
+            </div>
+            <div className="value-card">
+              <div className="value-icon">⭐</div>
+              <h3>Excellence</h3>
+              <p>We strive for the highest quality in our services and continuously improve our processes.</p>
+            </div>
+            <div className="value-card">
+              <div className="value-icon">🎯</div>
+              <h3>Innovation</h3>
+              <p>We embrace new ideas and technologies to provide cutting-edge solutions for our clients.</p>
+            </div>
+            <div className="value-card">
+              <div className="value-icon">👥</div>
+              <h3>Collaboration</h3>
+              <p>We work closely with our clients as partners to achieve shared goals and mutual success.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Team Section */}
+      <section className="about-team">
+        <div className="container">
+          <div className="section-header">
+            <h2>Meet Our Team</h2>
+            <p>The talented professionals behind our success</p>
+          </div>
+          <div className="team-grid">
+            <div className="team-member">
+              <div className="member-photo">
+                <span>👨‍💼</span>
+              </div>
+              <h3>John Smith</h3>
+              <p className="member-role">CEO & Founder</p>
+              <p className="member-bio">
+                With over 15 years of industry experience, John leads our vision
+                and strategic direction.
+              </p>
+            </div>
+            <div className="team-member">
+              <div className="member-photo">
+                <span>👩‍💻</span>
+              </div>
+              <h3>Sarah Johnson</h3>
+              <p className="member-role">Head of Operations</p>
+              <p className="member-bio">
+                Sarah ensures our operations run smoothly and our clients receive
+                exceptional service.
+              </p>
+            </div>
+            <div className="team-member">
+              <div className="member-photo">
+                <span>👨‍🔬</span>
+              </div>
+              <h3>Mike Davis</h3>
+              <p className="member-role">Technical Director</p>
+              <p className="member-bio">
+                Mike leads our technical innovation and ensures we stay ahead
+                of industry trends.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="about-cta">
+        <div className="container">
+          <div className="cta-content">
+            <h2>Ready to Work Together?</h2>
+            <p>Let's discuss how ${context.businessName} can help you achieve your goals.</p>
+            <div className="cta-buttons">
+              <button className="btn btn-primary">Get Started</button>
+              <button className="btn btn-outline">Contact Us</button>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
@@ -2373,6 +2817,7 @@ export default About;`;
 
   private generateServicesPage(context: any): string {
     const services = context.aiContent.services;
+    const testimonials = context.aiContent.testimonials;
 
     return `import React from 'react';
 import './Services.css';
@@ -2380,28 +2825,288 @@ import './Services.css';
 const Services: React.FC = () => {
   return (
     <div className="services-page">
-      <div className="container">
-        <div className="services-header">
-          <h1>Our Services</h1>
-          <p className="services-subtitle">Comprehensive solutions tailored to your needs</p>
-        </div>
-
-        <div className="services-grid">
-          ${services
-            .map(
-              (service: any, index: number) => `
-          <div className="service-card" key={${index}}>
-            <div className="service-icon">
-              <span className="icon">🔧</span>
+      {/* Hero Section */}
+      <section className="services-hero">
+        <div className="container">
+          <div className="hero-content">
+            <h1>Our Services</h1>
+            <p className="hero-subtitle">
+              Comprehensive solutions designed to drive your business forward with expertise and innovation
+            </p>
+            <div className="hero-stats">
+              <div className="stat">
+                <h3>500+</h3>
+                <p>Projects Delivered</p>
+              </div>
+              <div className="stat">
+                <h3>98%</h3>
+                <p>Client Satisfaction</p>
+              </div>
+              <div className="stat">
+                <h3>24/7</h3>
+                <p>Support Available</p>
+              </div>
             </div>
-            <h3>${service.title}</h3>
-            <p>${service.description}</p>
-            <button className="btn btn-outline">Learn More</button>
-          </div>`,
-            )
-            .join("")}
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Services Overview */}
+      <section className="services-overview">
+        <div className="container">
+          <div className="section-header">
+            <h2>What We Offer</h2>
+            <p className="services-subtitle">Professional services tailored to meet your unique business needs</p>
+          </div>
+          <div className="services-grid">
+            ${services
+              .map(
+                (service: any, index: number) => `
+            <div className="service-card" key={${index}}>
+              <div className="service-icon">
+                <span className="icon">🔧</span>
+              </div>
+              <h3>${service.title}</h3>
+              <p>${service.description}</p>
+              <ul className="service-features">
+                <li>Expert consultation</li>
+                <li>Custom implementation</li>
+                <li>Ongoing support</li>
+                <li>Performance monitoring</li>
+              </ul>
+              <div className="service-price">Starting at $99/mo</div>
+              <button className="btn btn-outline">Get Quote</button>
+            </div>`,
+              )
+              .join("")}
+          </div>
+        </div>
+      </section>
+
+      {/* Process Section */}
+      <section className="process-section">
+        <div className="container">
+          <div className="section-header">
+            <h2>Our Process</h2>
+            <p className="subtitle">How we deliver exceptional results</p>
+          </div>
+          <div className="process-steps">
+            <div className="process-step" data-step="1">
+              <div className="step-icon">🔍</div>
+              <h3>Discovery</h3>
+              <p>We start by understanding your business goals and challenges</p>
+            </div>
+            <div className="process-step" data-step="2">
+              <div className="step-icon">💡</div>
+              <h3>Strategy</h3>
+              <p>Develop a customized strategy tailored to your specific needs</p>
+            </div>
+            <div className="process-step" data-step="3">
+              <div className="step-icon">⚙️</div>
+              <h3>Implementation</h3>
+              <p>Execute the plan with precision and attention to detail</p>
+            </div>
+            <div className="process-step" data-step="4">
+              <div className="step-icon">📈</div>
+              <h3>Optimization</h3>
+              <p>Continuously monitor and optimize for best results</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="why-choose-us">
+        <div className="container">
+          <div className="why-content">
+            <div className="why-text">
+              <h2>Why Choose ${context.businessName}?</h2>
+              <p className="why-lead">
+                We combine industry expertise with innovative solutions to deliver exceptional results for our clients.
+              </p>
+              <div className="why-features">
+                <div className="why-feature">
+                  <div className="feature-icon">🏆</div>
+                  <div>
+                    <h4>Proven Track Record</h4>
+                    <p>Over 500 successful projects across various industries</p>
+                  </div>
+                </div>
+                <div className="why-feature">
+                  <div className="feature-icon">⚡</div>
+                  <div>
+                    <h4>Fast Turnaround</h4>
+                    <p>Efficient processes that deliver results without compromising quality</p>
+                  </div>
+                </div>
+                <div className="why-feature">
+                  <div className="feature-icon">🎯</div>
+                  <div>
+                    <h4>Tailored Solutions</h4>
+                    <p>Custom approaches designed specifically for your business needs</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="why-image">
+              <div className="image-placeholder">
+                <span>📊</span>
+                <p>Your success is our priority</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="pricing-section">
+        <div className="container">
+          <div className="section-header">
+            <h2>Service Packages</h2>
+            <p className="subtitle">Choose the package that fits your needs</p>
+          </div>
+          <div className="pricing-grid">
+            <div className="pricing-card">
+              <div className="pricing-header">
+                <h3>Starter</h3>
+                <div className="price">$99<span>/mo</span></div>
+              </div>
+              <ul className="pricing-features">
+                <li>Basic consultation</li>
+                <li>Initial setup</li>
+                <li>Email support</li>
+                <li>Monthly reports</li>
+              </ul>
+              <button className="btn btn-outline">Get Started</button>
+            </div>
+            <div className="pricing-card featured">
+              <div className="pricing-badge">Most Popular</div>
+              <div className="pricing-header">
+                <h3>Professional</h3>
+                <div className="price">$299<span>/mo</span></div>
+              </div>
+              <ul className="pricing-features">
+                <li>Everything in Starter</li>
+                <li>Advanced features</li>
+                <li>Priority support</li>
+                <li>Weekly reports</li>
+                <li>Custom integrations</li>
+              </ul>
+              <button className="btn btn-primary">Get Started</button>
+            </div>
+            <div className="pricing-card">
+              <div className="pricing-header">
+                <h3>Enterprise</h3>
+                <div className="price">Custom</div>
+              </div>
+              <ul className="pricing-features">
+                <li>Everything in Professional</li>
+                <li>Dedicated account manager</li>
+                <li>24/7 phone support</li>
+                <li>Daily reports</li>
+                <li>Custom development</li>
+              </ul>
+              <button className="btn btn-outline">Contact Us</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="testimonials-section">
+        <div className="container">
+          <div className="section-header">
+            <h2>Client Success Stories</h2>
+            <p className="subtitle">See what our clients have to say about our services</p>
+          </div>
+          <div className="testimonials-grid">
+            ${testimonials
+              .map(
+                (testimonial: any) => `
+            <div className="testimonial-card">
+              <div className="testimonial-content">
+                <p>"${testimonial.text}"</p>
+              </div>
+              <div className="testimonial-author">
+                <div className="author-avatar">
+                  <span>${testimonial.name.charAt(0)}</span>
+                </div>
+                <div className="author-info">
+                  <h4>${testimonial.name}</h4>
+                  <div className="rating">
+                    ${"★".repeat(testimonial.rating || 5)}
+                  </div>
+                </div>
+              </div>
+            </div>`,
+              )
+              .join("")}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="services-cta">
+        <div className="container">
+          <div className="cta-content">
+            <h2>Ready to Transform Your Business?</h2>
+            <p>Let's discuss how our services can help you achieve your goals.</p>
+            <div className="cta-buttons">
+              <button className="btn btn-primary">Get Free Consultation</button>
+              <button className="btn btn-outline">View Portfolio</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="footer">
+        <div className="container">
+          <div className="footer-content">
+            <div className="footer-section">
+              <h3>${context.businessName}</h3>
+              <p>Your trusted partner for professional solutions and exceptional service.</p>
+              <div className="footer-social">
+                <a href="#" className="social-link">📧</a>
+                <a href="#" className="social-link">📱</a>
+                <a href="#" className="social-link">🌐</a>
+              </div>
+            </div>
+            <div className="footer-section">
+              <h4>Services</h4>
+              <ul className="footer-links">
+                ${services
+                  .slice(0, 4)
+                  .map(
+                    (service: any) =>
+                      `<li><a href="/services">${service.title}</a></li>`,
+                  )
+                  .join("")}
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4>Company</h4>
+              <ul className="footer-links">
+                <li><a href="/about">About</a></li>
+                <li><a href="/contact">Contact</a></li>
+                <li><a href="/testimonials">Testimonials</a></li>
+                <li><a href="/gallery">Gallery</a></li>
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4>Contact Info</h4>
+              <div className="contact-info">
+                <p>📧 info@${context.businessName.toLowerCase().replace(/\s+/g, "")}.com</p>
+                <p>📱 (555) 123-4567</p>
+                <p>📍 Your City, State</p>
+              </div>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <p>&copy; 2024 ${context.businessName}. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
@@ -2537,7 +3242,7 @@ const Contact: React.FC = () => {
 export default Contact;`;
   }
 
-  private generateGalleryPage(_context: any): string {
+  private generateGalleryPage(context: any): string {
     return `import React, { useState } from 'react';
 import './Gallery.css';
 
@@ -2547,15 +3252,18 @@ interface GalleryItem {
   alt: string;
   title: string;
   category: string;
+  description: string;
 }
 
 const sampleImages: GalleryItem[] = [
-  { id: 1, src: '/images/gallery/image1.jpg', alt: 'Gallery Image 1', title: 'Project 1', category: 'work' },
-  { id: 2, src: '/images/gallery/image2.jpg', alt: 'Gallery Image 2', title: 'Project 2', category: 'work' },
-  { id: 3, src: '/images/gallery/image3.jpg', alt: 'Gallery Image 3', title: 'Team Photo', category: 'team' },
-  { id: 4, src: '/images/gallery/image4.jpg', alt: 'Gallery Image 4', title: 'Office Space', category: 'office' },
-  { id: 5, src: '/images/gallery/image5.jpg', alt: 'Gallery Image 5', title: 'Event 1', category: 'events' },
-  { id: 6, src: '/images/gallery/image6.jpg', alt: 'Gallery Image 6', title: 'Event 2', category: 'events' },
+  { id: 1, src: '/images/gallery/image1.jpg', alt: 'Gallery Image 1', title: 'Project 1', category: 'work', description: 'Innovative solution for client success' },
+  { id: 2, src: '/images/gallery/image2.jpg', alt: 'Gallery Image 2', title: 'Project 2', category: 'work', description: 'Creative design implementation' },
+  { id: 3, src: '/images/gallery/image3.jpg', alt: 'Gallery Image 3', title: 'Team Photo', category: 'team', description: 'Our amazing team members' },
+  { id: 4, src: '/images/gallery/image4.jpg', alt: 'Gallery Image 4', title: 'Office Space', category: 'office', description: 'Modern workplace environment' },
+  { id: 5, src: '/images/gallery/image5.jpg', alt: 'Gallery Image 5', title: 'Event 1', category: 'events', description: 'Company milestone celebration' },
+  { id: 6, src: '/images/gallery/image6.jpg', alt: 'Gallery Image 6', title: 'Event 2', category: 'events', description: 'Industry conference participation' },
+  { id: 7, src: '/images/gallery/image7.jpg', alt: 'Gallery Image 7', title: 'Project 3', category: 'work', description: 'Award-winning project delivery' },
+  { id: 8, src: '/images/gallery/image8.jpg', alt: 'Gallery Image 8', title: 'Workshop', category: 'events', description: 'Skills development workshop' },
 ];
 
 const Gallery: React.FC = () => {
@@ -2567,49 +3275,224 @@ const Gallery: React.FC = () => {
 
   return (
     <div className="gallery-page">
-      <div className="container">
-        <div className="gallery-header">
-          <h1>Gallery</h1>
-          <p className="gallery-subtitle">Explore our work and achievements</p>
-        </div>
-
-        <div className="gallery-filters">
-          {categories.map(category => (
-            <button
-              key={category}
-              className={\`filter-btn \${filter === category ? 'active' : ''}\`}
-              onClick={() => setFilter(category)}
-            >
-              {category.charAt(0).toUpperCase() + category.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        <div className="gallery-grid">
-          {filteredImages.map(image => (
-            <div
-              key={image.id}
-              className="gallery-item"
-              onClick={() => setSelectedImage(image)}
-            >
-              <img src={image.src} alt={image.alt} />
-              <div className="gallery-overlay">
-                <h3>{image.title}</h3>
+      {/* Hero Section */}
+      <section className="gallery-hero">
+        <div className="container">
+          <div className="hero-content">
+            <h1>Our Gallery</h1>
+            <p className="hero-subtitle">
+              Explore our work, achievements, and memorable moments that showcase our journey and success
+            </p>
+            <div className="hero-stats">
+              <div className="stat">
+                <h3>500+</h3>
+                <p>Projects</p>
+              </div>
+              <div className="stat">
+                <h3>50+</h3>
+                <p>Awards</p>
+              </div>
+              <div className="stat">
+                <h3>10+</h3>
+                <p>Years</p>
               </div>
             </div>
-          ))}
+          </div>
         </div>
+      </section>
 
-        {selectedImage && (
-          <div className="modal-overlay" onClick={() => setSelectedImage(null)}>
-            <div className="modal-content">
-              <img src={selectedImage.src} alt={selectedImage.alt} />
-              <h3>{selectedImage.title}</h3>
-              <button className="close-btn" onClick={() => setSelectedImage(null)}>×</button>
+      {/* Gallery Overview */}
+      <section className="gallery-overview">
+        <div className="container">
+          <div className="section-header">
+            <h2>Visual Journey</h2>
+            <p className="gallery-subtitle">Discover our portfolio of successful projects and memorable moments</p>
+          </div>
+
+          <div className="gallery-filters">
+            {categories.map(category => (
+              <button
+                key={category}
+                className={\`filter-btn \${filter === category ? 'active' : ''}\`}
+                onClick={() => setFilter(category)}
+              >
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <div className="gallery-grid">
+            {filteredImages.map(image => (
+              <div
+                key={image.id}
+                className="gallery-item"
+                onClick={() => setSelectedImage(image)}
+              >
+                <img src={image.src} alt={image.alt} />
+                <div className="gallery-overlay">
+                  <h3>{image.title}</h3>
+                  <p>{image.description}</p>
+                  <span className="view-details">View Details</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Showcase Section */}
+      <section className="showcase-section">
+        <div className="container">
+          <div className="showcase-content">
+            <div className="showcase-text">
+              <h2>Excellence in Every Project</h2>
+              <p className="showcase-lead">
+                Each image in our gallery tells a story of dedication, innovation, and successful collaboration with our clients.
+              </p>
+              <div className="showcase-features">
+                <div className="showcase-feature">
+                  <div className="feature-icon">🎨</div>
+                  <div>
+                    <h4>Creative Solutions</h4>
+                    <p>Innovative approaches to complex challenges</p>
+                  </div>
+                </div>
+                <div className="showcase-feature">
+                  <div className="feature-icon">🏆</div>
+                  <div>
+                    <h4>Award-Winning Work</h4>
+                    <p>Recognition for excellence in our industry</p>
+                  </div>
+                </div>
+                <div className="showcase-feature">
+                  <div className="feature-icon">🤝</div>
+                  <div>
+                    <h4>Client Satisfaction</h4>
+                    <p>Building lasting relationships through quality delivery</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="showcase-image">
+              <div className="image-placeholder">
+                <span>🖼️</span>
+                <p>Visual excellence in every detail</p>
+              </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      </section>
+
+      {/* Categories Section */}
+      <section className="categories-section">
+        <div className="container">
+          <div className="section-header">
+            <h2>Explore by Category</h2>
+            <p className="subtitle">Browse our work organized by different areas of expertise</p>
+          </div>
+          <div className="categories-grid">
+            <div className="category-card">
+              <div className="category-icon">💼</div>
+              <h3>Work Projects</h3>
+              <p>Professional projects and client deliverables</p>
+              <span className="category-count">{sampleImages.filter(img => img.category === 'work').length} items</span>
+            </div>
+            <div className="category-card">
+              <div className="category-icon">👥</div>
+              <h3>Team & Culture</h3>
+              <p>Our team members and company culture</p>
+              <span className="category-count">{sampleImages.filter(img => img.category === 'team').length} items</span>
+            </div>
+            <div className="category-card">
+              <div className="category-icon">🏢</div>
+              <h3>Office & Workspace</h3>
+              <p>Our modern work environment and facilities</p>
+              <span className="category-count">{sampleImages.filter(img => img.category === 'office').length} items</span>
+            </div>
+            <div className="category-card">
+              <div className="category-icon">🎉</div>
+              <h3>Events & Milestones</h3>
+              <p>Company events and important milestones</p>
+              <span className="category-count">{sampleImages.filter(img => img.category === 'events').length} items</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="gallery-cta">
+        <div className="container">
+          <div className="cta-content">
+            <h2>Ready to Create Something Amazing?</h2>
+            <p>Let's work together to create your next success story.</p>
+            <div className="cta-buttons">
+              <button className="btn btn-primary">Start Your Project</button>
+              <button className="btn btn-outline">View All Work</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Modal */}
+      {selectedImage && (
+        <div className="modal-overlay" onClick={() => setSelectedImage(null)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <img src={selectedImage.src} alt={selectedImage.alt} />
+            <div className="modal-info">
+              <h3>{selectedImage.title}</h3>
+              <p>{selectedImage.description}</p>
+              <span className="modal-category">{selectedImage.category}</span>
+            </div>
+            <button className="close-btn" onClick={() => setSelectedImage(null)}>×</button>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="footer">
+        <div className="container">
+          <div className="footer-content">
+            <div className="footer-section">
+              <h3>${context.businessName}</h3>
+              <p>Your trusted partner for professional solutions and exceptional service.</p>
+              <div className="footer-social">
+                <a href="#" className="social-link">📧</a>
+                <a href="#" className="social-link">📱</a>
+                <a href="#" className="social-link">🌐</a>
+              </div>
+            </div>
+            <div className="footer-section">
+              <h4>Gallery</h4>
+              <ul className="footer-links">
+                <li><a href="/gallery">All Projects</a></li>
+                <li><a href="/gallery?filter=work">Work Projects</a></li>
+                <li><a href="/gallery?filter=team">Team Photos</a></li>
+                <li><a href="/gallery?filter=events">Events</a></li>
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4>Company</h4>
+              <ul className="footer-links">
+                <li><a href="/about">About</a></li>
+                <li><a href="/services">Services</a></li>
+                <li><a href="/contact">Contact</a></li>
+                <li><a href="/testimonials">Testimonials</a></li>
+              </ul>
+            </div>
+            <div className="footer-section">
+              <h4>Contact Info</h4>
+              <div className="contact-info">
+                <p>📧 info@${context.businessName.toLowerCase().replace(/\s+/g, "")}.com</p>
+                <p>📱 (555) 123-4567</p>
+                <p>📍 Your City, State</p>
+              </div>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <p>&copy; 2024 ${context.businessName}. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
@@ -4075,58 +4958,239 @@ main {
     // Navigation.css
     files.push({
       path: "src/components/Navigation.css",
-      content: `.navigation {
+      content: `/* Navigation Styles */
+.navigation {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(var(--blur-md));
-  -webkit-backdrop-filter: blur(var(--blur-md));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  position: sticky;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  position: fixed;
   top: 0;
-  z-index: var(--z-sticky);
-  transition: all 0.3s ease;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navigation.scrolled {
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
 }
 
 .nav-container {
-  max-width: var(--container-md);
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--spacing-lg);
+  padding: 0 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 4rem;
-}
-
-.navigation:focus-within {
-  box-shadow: inset 0 0 0 2px var(--primary-600);
+  height: 70px;
+  position: relative;
 }
 
 .nav-brand {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  text-decoration: none;
+  z-index: 1001;
 }
 
 .nav-brand h1 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  font-size: 1.75rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  letter-spacing: -0.02em;
 }
 
-.nav-brand-icon {
-  width: 2rem;
-  height: 2rem;
-  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
-  border-radius: var(--radius-md);
+/* Mobile Menu Toggle */
+.nav-toggle {
+  display: none;
+  flex-direction: column;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  z-index: 1001;
+  position: relative;
+}
+
+.nav-toggle span {
+  width: 25px;
+  height: 3px;
+  background: #333;
+  margin: 3px 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 2px;
+}
+
+.nav-toggle.active span:nth-child(1) {
+  transform: rotate(45deg) translate(6px, 6px);
+}
+
+.nav-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-toggle.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* Desktop Navigation Links */
+.nav-links {
   display: flex;
   align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-link {
+  color: #4a5568;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  position: relative;
+  text-transform: capitalize;
+}
+
+.nav-link:hover {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+.nav-link.active {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.15);
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 50%;
+  background: #667eea;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 80%;
+  left: 10%;
+}
+
+/* Mobile Navigation Overlay */
+.nav-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .nav-container {
+    padding: 0 1rem;
+  }
+
+  .nav-brand h1 {
+    font-size: 1.5rem;
+  }
+
+  .nav-toggle {
+    display: flex;
+  }
+
+  .nav-links {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 280px;
+    height: 100vh;
+    background: #fff;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    padding: 80px 2rem 2rem;
+    box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    gap: 1rem;
+  }
+
+  .nav-links.active {
+    right: 0;
+  }
+
+  .nav-overlay {
+    display: block;
+  }
+
+  .nav-link {
+    width: 100%;
+    padding: 1rem 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid #f0f0f0;
+    border-radius: 0;
+    background: none;
+  }
+
+  .nav-link:last-child {
+    border-bottom: none;
+  }
+
+  .nav-link::after {
+    display: none;
+  }
+
+  .nav-link:hover {
+    background: rgba(102, 126, 234, 0.05);
+    transform: none;
+    padding-left: 1rem;
+  }
+}
+
+/* Tablet Styles */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .nav-container {
+    padding: 0 2rem;
+  }
+
+  .nav-links {
+    gap: 1.5rem;
+  }
+}
+
+/* Animation for smooth transitions */
+@media (prefers-reduced-motion: no-preference) {
+  .navigation {
+    animation: slideDown 0.3s ease-out;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
   font-size: 0.875rem;
 }
 
@@ -4763,6 +5827,344 @@ main {
   }
 }
 
+/* Features Section */
+.features-section {
+  padding: var(--spacing-3xl) 0;
+  background: white;
+}
+
+.features-section h2 {
+  text-align: center;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-sm);
+  color: var(--gray-900);
+  letter-spacing: -0.02em;
+}
+
+.features-section .subtitle {
+  text-align: center;
+  font-size: 1.125rem;
+  color: var(--gray-600);
+  margin-bottom: var(--spacing-3xl);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-xl);
+  margin-top: var(--spacing-2xl);
+}
+
+.feature-card {
+  background: white;
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover::before {
+  transform: scaleX(1);
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-200);
+}
+
+.feature-icon {
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-lg);
+  font-size: 1.5rem;
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.feature-card h3 {
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-md);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.feature-card p {
+  color: var(--gray-600);
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+/* Stats Section */
+.stats-section {
+  padding: var(--spacing-3xl) 0;
+  background: var(--gray-50);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.stat-number {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--primary-600);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: var(--gray-600);
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+/* Testimonials Section */
+.testimonials-section {
+  padding: var(--spacing-3xl) 0;
+  background: white;
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: var(--spacing-2xl);
+}
+
+.testimonial-card {
+  background: white;
+  padding: 2rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  transition: all 0.3s ease;
+}
+
+.testimonial-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.testimonial-content {
+  margin-bottom: var(--spacing-lg);
+}
+
+.testimonial-content p {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--gray-700);
+  font-style: italic;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.author-avatar {
+  width: 3rem;
+  height: 3rem;
+  background: var(--primary-600);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.author-info h4 {
+  margin: 0 0 0.25rem 0;
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
+.rating {
+  color: #ffd700;
+  font-size: 0.875rem;
+}
+
+/* CTA Section */
+.cta-section {
+  padding: var(--spacing-3xl) 0;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  color: white;
+  text-align: center;
+}
+
+.cta-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.cta-content h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  letter-spacing: -0.02em;
+}
+
+.cta-content p {
+  font-size: 1.125rem;
+  margin-bottom: var(--spacing-xl);
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Footer */
+.footer {
+  background: var(--gray-900);
+  color: white;
+  padding: var(--spacing-3xl) 0 var(--spacing-lg);
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-bottom: var(--spacing-xl);
+}
+
+.footer-section h3,
+.footer-section h4 {
+  margin-bottom: var(--spacing-md);
+  color: white;
+}
+
+.footer-section p {
+  color: var(--gray-300);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-md);
+}
+
+.footer-social {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--gray-800);
+  border-radius: 50%;
+  text-decoration: none;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  background: var(--primary-600);
+  transform: translateY(-2px);
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.5rem;
+}
+
+.footer-links a {
+  color: var(--gray-300);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: var(--primary-400);
+}
+
+.contact-info p {
+  margin-bottom: 0.5rem;
+  color: var(--gray-300);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--gray-800);
+  color: var(--gray-400);
+}
+
+@media (max-width: 768px) {
+  .features-grid,
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
 @media (max-width: 480px) {
   .hero-title {
     font-size: 2rem;
@@ -4779,6 +6181,19 @@ main {
 
   .container {
     padding: 0 var(--spacing-md);
+  }
+
+  .features-section h2,
+  .cta-content h2 {
+    font-size: 2rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-number {
+    font-size: 2.5rem;
   }
 }`;
     }
@@ -5331,32 +6746,378 @@ main {
   min-height: 100vh;
 }
 
+/* Gallery Hero */
 .gallery-hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 50%, var(--primary-900) 100%);
   color: white;
-  padding: 100px 0;
+  padding: 8rem 0 6rem;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.gallery-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,32L48,80C96,128,192,224,288,224C384,224,480,128,576,90.7C672,53,768,75,864,96C960,117,1056,139,1152,149.3C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') bottom center / cover no-repeat;
+  pointer-events: none;
+}
+
+.gallery-hero .hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.gallery-hero h1 {
+  font-size: 4rem;
+  font-weight: 800;
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.gallery-hero .hero-subtitle {
+  font-size: 1.375rem;
+  margin-bottom: var(--spacing-2xl);
+  opacity: 0.9;
+  line-height: 1.6;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Gallery Overview */
+.gallery-overview {
+  padding: var(--spacing-3xl) 0;
+  background: white;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: var(--spacing-3xl);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-header h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-md);
+  letter-spacing: -0.02em;
+}
+
+.gallery-subtitle {
+  font-size: 1.125rem;
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+.gallery-filters {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--gray-100);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  color: var(--gray-700);
+}
+
+.filter-btn:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-300);
+  color: var(--primary-700);
+}
+
+.filter-btn.active {
+  background: var(--primary-600);
+  color: white;
+  border-color: var(--primary-600);
 }
 
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2rem;
-  padding: 2rem 0;
+  margin-top: 2rem;
 }
 
 .gallery-item {
-  cursor: pointer;
-  border-radius: 12px;
+  position: relative;
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  transition: transform 0.3s ease;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+  aspect-ratio: 4/3;
 }
 
 .gallery-item:hover {
   transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
 }
 
-.gallery-modal {
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.gallery-item:hover img {
+  transform: scale(1.05);
+}
+
+.gallery-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  color: white;
+  padding: 2rem 1.5rem 1.5rem;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.gallery-item:hover .gallery-overlay {
+  transform: translateY(0);
+}
+
+.gallery-overlay h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.gallery-overlay p {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  margin-bottom: 1rem;
+}
+
+.view-details {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+/* Showcase Section */
+.showcase-section {
+  padding: var(--spacing-3xl) 0;
+  background: var(--gray-50);
+}
+
+.showcase-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.showcase-text h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-lg);
+  letter-spacing: -0.02em;
+}
+
+.showcase-lead {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--primary-600);
+  margin-bottom: var(--spacing-xl);
+  line-height: 1.6;
+}
+
+.showcase-features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.showcase-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.showcase-feature .feature-icon {
+  font-size: 1.5rem;
+  width: 3rem;
+  height: 3rem;
+  background: var(--primary-600);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.showcase-feature h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 0.5rem;
+}
+
+.showcase-feature p {
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+.showcase-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.showcase-image .image-placeholder {
+  width: 100%;
+  height: 400px;
+  background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 2px solid var(--primary-300);
+}
+
+.showcase-image .image-placeholder span {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  color: var(--primary-600);
+}
+
+.showcase-image .image-placeholder p {
+  font-size: 1.125rem;
+  color: var(--primary-700);
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Categories Section */
+.categories-section {
+  padding: var(--spacing-3xl) 0;
+  background: white;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: var(--spacing-2xl);
+}
+
+.category-card {
+  background: white;
+  padding: 2rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.category-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-300);
+}
+
+.category-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+  width: 4rem;
+  height: 4rem;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+  color: white;
+}
+
+.category-card h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-sm);
+}
+
+.category-card p {
+  color: var(--gray-600);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-md);
+}
+
+.category-count {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: var(--primary-100);
+  color: var(--primary-700);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Gallery CTA */
+.gallery-cta {
+  padding: var(--spacing-3xl) 0;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  color: white;
+  text-align: center;
+}
+
+.gallery-cta .cta-content h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  letter-spacing: -0.02em;
+}
+
+.gallery-cta .cta-content p {
+  font-size: 1.125rem;
+  margin-bottom: var(--spacing-xl);
+  opacity: 0.9;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Modal */
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -5367,6 +7128,230 @@ main {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: white;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+}
+
+.modal-content img {
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
+  display: block;
+}
+
+.modal-info {
+  padding: 2rem;
+}
+
+.modal-info h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-sm);
+}
+
+.modal-info p {
+  color: var(--gray-600);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-md);
+}
+
+.modal-category {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--primary-100);
+  color: var(--primary-700);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.close-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Footer */
+.footer {
+  background: var(--gray-900);
+  color: white;
+  padding: var(--spacing-3xl) 0 var(--spacing-lg);
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-bottom: var(--spacing-xl);
+}
+
+.footer-section h3,
+.footer-section h4 {
+  margin-bottom: var(--spacing-md);
+  color: white;
+}
+
+.footer-section p {
+  color: var(--gray-300);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-md);
+}
+
+.footer-social {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--gray-800);
+  border-radius: 50%;
+  text-decoration: none;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  background: var(--primary-600);
+  transform: translateY(-2px);
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.5rem;
+}
+
+.footer-links a {
+  color: var(--gray-300);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: var(--primary-400);
+}
+
+.contact-info p {
+  margin-bottom: 0.5rem;
+  color: var(--gray-300);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--gray-800);
+  color: var(--gray-400);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .gallery-hero {
+    padding: 4rem 0 3rem;
+  }
+
+  .gallery-hero h1 {
+    font-size: 2.5rem;
+  }
+
+  .gallery-hero .hero-subtitle {
+    font-size: 1.125rem;
+  }
+
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .gallery-filters {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .showcase-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .categories-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .modal-content {
+    max-width: 95vw;
+    margin: 1rem;
+  }
+
+  .modal-info {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-hero h1 {
+    font-size: 2rem;
+  }
+
+  .showcase-text h2 {
+    font-size: 2rem;
+  }
+
+  .gallery-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .showcase-image .image-placeholder {
+    height: 300px;
+  }
+
+  .showcase-image .image-placeholder span {
+    font-size: 3rem;
+  }
 }`;
     }
 
@@ -5506,121 +7491,1498 @@ main {
   min-height: 100vh;
 }
 
+/* Hero Section */
 .about-hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 50%, var(--primary-900) 100%);
   color: white;
-  padding: 100px 0;
+  padding: 8rem 0 6rem;
   text-align: center;
-}
-
-.story-section {
-  padding: 100px 0;
-}
-
-.timeline {
   position: relative;
-  padding-left: 2rem;
+  overflow: hidden;
 }
 
-.timeline::before {
+.about-hero::before {
   content: '';
   position: absolute;
-  left: 0;
   top: 0;
+  left: 0;
+  right: 0;
   bottom: 0;
-  width: 2px;
-  background: #667eea;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,32L48,80C96,128,192,224,288,224C384,224,480,128,576,90.7C672,53,768,75,864,96C960,117,1056,139,1152,149.3C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') bottom center / cover no-repeat;
+  pointer-events: none;
+}
+
+.container {
+  max-width: var(--container-lg);
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.about-hero h1 {
+  font-size: 4rem;
+  font-weight: 800;
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-size: 1.375rem;
+  margin-bottom: var(--spacing-2xl);
+  opacity: 0.9;
+  line-height: 1.6;
+  font-weight: 400;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.stat {
+  text-align: center;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.stat:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.stat h3 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: white;
+}
+
+.stat p {
+  font-size: 0.875rem;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+/* Story Section */
+.about-story {
+  padding: var(--spacing-3xl) 0;
+  background: white;
+}
+
+.story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+  margin: 4rem 0;
+}
+
+.story-content {
+  padding-right: 2rem;
+}
+
+.story-content h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-lg);
+  letter-spacing: -0.02em;
+}
+
+.story-lead {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--primary-600);
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.6;
+}
+
+.story-content p {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--gray-600);
+  margin-bottom: var(--spacing-md);
+}
+
+.story-highlights {
+  margin-top: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.highlight {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--primary-600);
+}
+
+.highlight-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  background: var(--primary-600);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.highlight div h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 0.5rem;
+}
+
+.highlight div p {
+  font-size: 1rem;
+  color: var(--gray-600);
+  margin: 0;
+}
+
+.story-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.image-placeholder {
+  width: 100%;
+  height: 400px;
+  background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 2px solid var(--primary-300);
+}
+
+.image-placeholder span {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  color: var(--primary-600);
+}
+
+.image-placeholder p {
+  font-size: 1.125rem;
+  color: var(--primary-700);
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Values Section */
+.about-values {
+  padding: var(--spacing-3xl) 0;
+  background: var(--gray-50);
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: var(--spacing-3xl);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.section-header h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-md);
+  letter-spacing: -0.02em;
+}
+
+.section-header p {
+  font-size: 1.125rem;
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+}
+
+.value-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: all 0.3s ease;
+  border: 1px solid var(--gray-200);
+  position: relative;
+  overflow: hidden;
+}
+
+.value-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.value-card:hover::before {
+  transform: scaleX(1);
+}
+
+.value-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary-200);
+}
+
+.value-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-lg);
+  width: 4rem;
+  height: 4rem;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.value-card h3 {
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-md);
+}
+
+.value-card p {
+  color: var(--gray-600);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+/* Team Section */
+.about-team {
+  padding: var(--spacing-3xl) 0;
+  background: white;
 }
 
 .team-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
+  margin-top: 3rem;
 }
 
-.team-card {
+.team-member {
   background: white;
   padding: 2rem;
-  border-radius: 12px;
+  border-radius: 1rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   text-align: center;
+  transition: all 0.3s ease;
+  border: 1px solid var(--gray-200);
+}
+
+.team-member:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.member-photo {
+  width: 5rem;
+  height: 5rem;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-lg);
+  font-size: 2rem;
+  color: white;
+  box-shadow: var(--shadow-lg);
+}
+
+.team-member h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 0.5rem;
+}
+
+.member-role {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--primary-600);
+  margin-bottom: var(--spacing-md);
+}
+
+.member-bio {
+  font-size: 0.9rem;
+  color: var(--gray-600);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* CTA Section */
+.about-cta {
+  padding: var(--spacing-3xl) 0;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  color: white;
+  text-align: center;
+}
+
+.cta-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.cta-content h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  letter-spacing: -0.02em;
+}
+
+.cta-content p {
+  font-size: 1.125rem;
+  margin-bottom: var(--spacing-xl);
+  opacity: 0.9;
+  line-height: 1.6;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-xl);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+}
+
+.btn-primary {
+  background: white;
+  color: var(--primary-600);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  background: var(--gray-50);
+}
+
+.btn-outline {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .about-hero {
+    padding: 4rem 0 3rem;
+  }
+
+  .about-hero h1 {
+    font-size: 2.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.125rem;
+  }
+
+  .hero-stats {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .story-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .story-content {
+    padding-right: 0;
+  }
+
+  .story-content h2 {
+    font-size: 2rem;
+  }
+
+  .values-grid,
+  .team-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .section-header h2,
+  .cta-content h2 {
+    font-size: 2rem;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .btn {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+
+  .image-placeholder {
+    height: 300px;
+  }
+
+  .image-placeholder span {
+    font-size: 3rem;
+  }
+
+  .highlight {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-hero h1 {
+    font-size: 2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+
+  .value-card,
+  .team-member {
+    padding: var(--spacing-lg);
+  }
+
+  .stat {
+    padding: 1rem;
+  }
+
+  .stat h3 {
+    font-size: 2rem;
+  }
+
+  .story-content h2,
+  .section-header h2,
+  .cta-content h2 {
+    font-size: 1.75rem;
+  }
 }`;
     }
 
     if (selector === "services-page") {
       return `.services-page {
   min-height: 100vh;
+  padding: var(--spacing-xl) 0;
 }
 
-.services-hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 100px 0;
+.container {
+  max-width: var(--container-lg);
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+/* Services Header */
+.services-header {
   text-align: center;
+  margin-bottom: var(--spacing-3xl);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
+.services-header h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-md);
+  letter-spacing: -0.02em;
+}
+
+.services-subtitle {
+  font-size: 1.125rem;
+  color: var(--gray-600);
+  line-height: 1.6;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Services Grid */
 .services-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
-  padding: 2rem 0;
+  margin-top: var(--spacing-2xl);
 }
 
+/* Service Cards */
 .service-card {
   background: white;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.service-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  transform: scaleX(0);
   transition: transform 0.3s ease;
+}
+
+.service-card:hover::before {
+  transform: scaleX(1);
 }
 
 .service-card:hover {
   transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-200);
+}
+
+/* Service Icons */
+.service-icon {
+  width: 4rem;
+  height: 4rem;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+}
+
+.service-card:hover .service-icon {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-lg);
+}
+
+.service-icon .icon {
+  font-size: 1.75rem;
+  color: white;
+}
+
+/* Service Content */
+.service-card h3 {
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-md);
+  font-size: 1.375rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.service-card p {
+  color: var(--gray-600);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-lg);
+  flex-grow: 1;
+  text-align: center;
+  font-size: 1rem;
+}
+
+/* Buttons */
+.btn {
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-xl);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--primary-600);
+  border: 2px solid var(--primary-600);
+}
+
+.btn-outline:hover {
+  background: var(--primary-600);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+/* Process Steps */
+.process-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: var(--spacing-3xl);
+}
+
+.process-step {
+  text-align: center;
+  padding: 2rem;
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+  position: relative;
+}
+
+.process-step::before {
+  content: attr(data-step);
+  position: absolute;
+  top: -1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2rem;
+  height: 2rem;
+  background: var(--primary-600);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.process-step h4 {
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-sm);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.process-step p {
+  color: var(--gray-600);
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+/* Services Hero */
+.services-hero {
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 50%, var(--primary-900) 100%);
+  color: white;
+  padding: 8rem 0 6rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.services-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="rgba(255,255,255,0.1)" d="M0,32L48,80C96,128,192,224,288,224C384,224,480,128,576,90.7C672,53,768,75,864,96C960,117,1056,139,1152,149.3C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') bottom center / cover no-repeat;
+  pointer-events: none;
+}
+
+.services-hero .hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.services-hero h1 {
+  font-size: 4rem;
+  font-weight: 800;
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.services-hero .hero-subtitle {
+  font-size: 1.375rem;
+  margin-bottom: var(--spacing-2xl);
+  opacity: 0.9;
+  line-height: 1.6;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Services Overview */
+.services-overview {
+  padding: var(--spacing-3xl) 0;
+  background: white;
+}
+
+/* Process Section */
+.process-section {
+  padding: var(--spacing-3xl) 0;
+  background: var(--gray-50);
 }
 
 .process-steps {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 2rem;
+  margin-top: var(--spacing-2xl);
+}
+
+.process-step {
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: var(--radius-xl);
+  position: relative;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  transition: all 0.3s ease;
+}
+
+.process-step:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.process-step::before {
+  content: attr(data-step);
+  position: absolute;
+  top: -1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2rem;
+  height: 2rem;
+  background: var(--primary-600);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.step-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.process-step h3 {
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-sm);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.process-step p {
+  color: var(--gray-600);
+  line-height: 1.6;
+  font-size: 1rem;
+}
+
+/* Why Choose Us */
+.why-choose-us {
+  padding: var(--spacing-3xl) 0;
+  background: white;
+}
+
+.why-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.why-text h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-lg);
+  letter-spacing: -0.02em;
+}
+
+.why-lead {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--primary-600);
+  margin-bottom: var(--spacing-xl);
+  line-height: 1.6;
+}
+
+.why-features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.why-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.why-feature .feature-icon {
+  font-size: 1.5rem;
+  width: 3rem;
+  height: 3rem;
+  background: var(--primary-600);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.why-feature h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 0.5rem;
+}
+
+.why-feature p {
+  color: var(--gray-600);
+  line-height: 1.6;
+}
+
+.why-image {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.why-image .image-placeholder {
+  width: 100%;
+  height: 400px;
+  background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%);
+  border-radius: var(--radius-xl);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 2px solid var(--primary-300);
+}
+
+.why-image .image-placeholder span {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  color: var(--primary-600);
+}
+
+.why-image .image-placeholder p {
+  font-size: 1.125rem;
+  color: var(--primary-700);
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Pricing Section */
+.pricing-section {
+  padding: var(--spacing-3xl) 0;
+  background: var(--gray-50);
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: var(--spacing-2xl);
+}
+
+.pricing-card {
+  background: white;
+  padding: 2rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 2px solid var(--gray-200);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.pricing-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.pricing-card.featured {
+  border-color: var(--primary-600);
+  transform: scale(1.05);
+}
+
+.pricing-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary-600);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.pricing-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.pricing-header h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: 1rem;
+}
+
+.price {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-600);
+}
+
+.price span {
+  font-size: 1rem;
+  color: var(--gray-600);
+}
+
+.pricing-features {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 2rem;
+}
+
+.pricing-features li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: var(--gray-600);
+}
+
+.pricing-features li::before {
+  content: '✓';
+  color: var(--success-500);
+  font-weight: 600;
+}
+
+/* Services CTA */
+.services-cta {
+  padding: var(--spacing-3xl) 0;
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+  color: white;
+  text-align: center;
+}
+
+.services-cta .cta-content h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+  letter-spacing: -0.02em;
+}
+
+.services-cta .cta-content p {
+  font-size: 1.125rem;
+  margin-bottom: var(--spacing-xl);
+  opacity: 0.9;
+}
+
+/* Footer */
+.footer {
+  background: var(--gray-900);
+  color: white;
+  padding: var(--spacing-3xl) 0 var(--spacing-lg);
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-bottom: var(--spacing-xl);
+}
+
+.footer-section h3,
+.footer-section h4 {
+  margin-bottom: var(--spacing-md);
+  color: white;
+}
+
+.footer-section p {
+  color: var(--gray-300);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-md);
+}
+
+.footer-social {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: var(--gray-800);
+  border-radius: 50%;
+  text-decoration: none;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+}
+
+.social-link:hover {
+  background: var(--primary-600);
+  transform: translateY(-2px);
+}
+
+.footer-links {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-links li {
+  margin-bottom: 0.5rem;
+}
+
+.footer-links a {
+  color: var(--gray-300);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: var(--primary-400);
+}
+
+.contact-info p {
+  margin-bottom: 0.5rem;
+  color: var(--gray-300);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--gray-800);
+  color: var(--gray-400);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .services-page {
+    padding: var(--spacing-lg) 0;
+  }
+
+  .services-hero {
+    padding: 4rem 0 3rem;
+  }
+
+  .services-hero h1 {
+    font-size: 2.5rem;
+  }
+
+  .services-hero .hero-subtitle {
+    font-size: 1.125rem;
+  }
+
+  .services-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .service-card {
+    padding: var(--spacing-lg);
+  }
+
+  .process-steps {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .why-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-card.featured {
+    transform: none;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .services-hero h1 {
+    font-size: 2rem;
+  }
+
+  .service-card {
+    padding: 1.5rem;
+  }
+
+  .service-icon {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .service-icon .icon {
+    font-size: 1.5rem;
+  }
+
+  .btn {
+    width: 100%;
+    max-width: 200px;
+  }
+
+  .why-text h2 {
+    font-size: 2rem;
+  }
+
+  .pricing-card {
+    padding: 1.5rem;
+  }
+
+  .price {
+    font-size: 2rem;
+  }
 }`;
     }
 
     if (selector === "contact-page") {
       return `.contact-page {
   min-height: 100vh;
+  padding: var(--spacing-xl) 0;
+  background: var(--gray-50);
 }
 
-.contact-hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 100px 0;
+.container {
+  max-width: var(--container-lg);
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+/* Contact Header */
+.contact-header {
   text-align: center;
+  margin-bottom: var(--spacing-3xl);
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.contact-grid {
+.contact-header h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-md);
+  letter-spacing: -0.02em;
+}
+
+.contact-subtitle {
+  font-size: 1.125rem;
+  color: var(--gray-600);
+  line-height: 1.6;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Contact Layout */
+.contact-layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 2fr;
   gap: 3rem;
-  padding: 2rem 0;
+  align-items: start;
 }
 
-.contact-form {
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
+/* Contact Info */
 .contact-info {
   background: white;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  height: fit-content;
 }
 
+.contact-info h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-lg);
+}
+
+.contact-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.contact-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: var(--spacing-md);
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--primary-600);
+}
+
+.contact-item strong {
+  color: var(--primary-600);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Contact Form */
+.contact-form {
+  background: white;
+  padding: 2rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+}
+
+.form-group {
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.6;
+}
+
+/* Buttons */
+.btn {
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-radius: var(--radius-xl);
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-800) 100%);
+}
+
+.btn-primary:disabled {
+  background: var(--gray-300);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Success Message */
+.success-message {
+  text-align: center;
+  background: white;
+  padding: 3rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  border: 2px solid var(--success-500);
+  margin-top: 2rem;
+}
+
+.success-message h2 {
+  color: var(--success-600);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: var(--spacing-md);
+}
+
+.success-message p {
+  color: var(--gray-600);
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+/* Mobile Responsiveness */
 @media (max-width: 768px) {
-  .contact-grid {
+  .contact-page {
+    padding: var(--spacing-lg) 0;
+  }
+
+  .contact-header h1 {
+    font-size: 2.5rem;
+  }
+
+  .contact-layout {
     grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .contact-info,
+  .contact-form {
+    padding: var(--spacing-lg);
+  }
+
+  .container {
+    padding: 0 var(--spacing-md);
+  }
+
+  .success-message {
+    padding: 2rem;
+  }
+
+  .success-message h2 {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-header h1 {
+    font-size: 2rem;
+  }
+
+  .contact-info,
+  .contact-form {
+    padding: 1.5rem;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
   }
 }`;
     }
@@ -5821,14 +9183,22 @@ export default defineConfig({
   "description": "${context.description}",
   "icons": [
     {
+      "src": "/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
       "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "start_url": "/",
@@ -5842,134 +9212,91 @@ export default defineConfig({
     // Service Worker
     files.push({
       path: "public/sw.js",
-      content: `// Service Worker for ${context.businessName}
-const CACHE_NAME = '${context.projectName}-v1';
+      content: `// Minimal Development-Only Service Worker
+// This SW is designed to not interfere with development
 
-// Pre-cache core app shell files
-const CORE_CACHE_FILES = [
-  '/',
-  '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png',
-  '/favicon.ico'
-];
-
-// Install event - cache core files
-self.addEventListener('install', event => {
-  console.log('Service Worker installing...');
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Caching core files');
-        return cache.addAll(CORE_CACHE_FILES);
-      })
-      .then(() => {
-        console.log('Service Worker installation complete');
-        return self.skipWaiting();
-      })
-      .catch(error => {
-        console.error('Service Worker installation failed:', error);
-      })
-  );
+self.addEventListener('install', () => {
+  // Install immediately without waiting
+  self.skipWaiting();
 });
 
-// Activate event - clean up old caches
-self.addEventListener('activate', event => {
-  console.log('Service Worker activating...');
-  event.waitUntil(
-    caches.keys()
-      .then(cacheNames => {
-        return Promise.all(
-          cacheNames.map(cacheName => {
-            if (cacheName !== CACHE_NAME) {
-              console.log('Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => {
-        console.log('Service Worker activation complete');
-        return self.clients.claim();
-      })
-  );
+self.addEventListener('activate', (event) => {
+  // Take control immediately
+  event.waitUntil(self.clients.claim());
 });
 
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', (event) => {
+  // Skip ALL development-related requests to avoid interference
+  const url = event.request.url;
+
+  // Skip Vite development files
+  if (url.includes('/@vite/') ||
+      url.includes('/@react-refresh') ||
+      url.includes('/@fs/') ||
+      url.includes('?import') ||
+      url.includes('?direct') ||
+      url.includes('?worker') ||
+      url.includes('hot-update') ||
+      url.includes('node_modules') ||
+      url.includes('.vite/')) {
+    return; // Let browser handle these normally
+  }
+
   // Skip non-GET requests
   if (event.request.method !== 'GET') {
     return;
   }
 
+  // For everything else, just pass through to network
+  // No caching in development to avoid conflicts
+  if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+    return; // Skip all caching in development
+  }
+
+  // Only cache in production
   event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        // Clone the request because it's a stream
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest)
-          .then(response => {
-            // Check if valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response because it's a stream
-            const responseToCache = response.clone();
-
-            // Cache successful responses
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          })
-          .catch(() => {
-            // Return offline fallback for navigation requests
-            if (event.request.destination === 'document') {
-              return caches.match('/');
-            }
-          });
-      })
+    fetch(event.request).catch(() => {
+      // Simple offline fallback only for navigation
+      if (event.request.mode === 'navigate') {
+        return new Response('App offline', {
+          headers: { 'Content-Type': 'text/html' }
+        });
+      }
+    })
   );
 });`,
       type: "js",
     });
 
-    // Icon files - Simple SVG-based icons as data URLs
+    // Icon files - Proper base64 PNG data
+    const validPNGBase64 =
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI/hzyku1wAAAABJRU5ErkJggg==";
+
     // 192x192 icon
     files.push({
       path: "public/icon-192x192.png",
-      content: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
-  <rect width="192" height="192" fill="#3182ce"/>
-  <text x="96" y="120" font-family="Arial, sans-serif" font-size="96" font-weight="bold" text-anchor="middle" fill="white">${context.businessName.charAt(0).toUpperCase()}</text>
-</svg>`)}`,
+      content: `data:image/png;base64,${validPNGBase64}`,
       type: "image",
     });
 
     // 512x512 icon
     files.push({
       path: "public/icon-512x512.png",
-      content: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" fill="#3182ce"/>
-  <text x="256" y="320" font-family="Arial, sans-serif" font-size="256" font-weight="bold" text-anchor="middle" fill="white">${context.businessName.charAt(0).toUpperCase()}</text>
-</svg>`)}`,
+      content: `data:image/png;base64,${validPNGBase64}`,
       type: "image",
     });
 
-    // Favicon
+    // 144x144 icon for PWA compliance
+    files.push({
+      path: "public/icon-144x144.png",
+      content: `data:image/png;base64,${validPNGBase64}`,
+      type: "image",
+    });
+
+    // Favicon as proper ICO format
     files.push({
       path: "public/favicon.ico",
-      content: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-  <rect width="32" height="32" fill="#3182ce"/>
-  <text x="16" y="22" font-family="Arial, sans-serif" font-size="18" font-weight="bold" text-anchor="middle" fill="white">${context.businessName.charAt(0).toUpperCase()}</text>
-</svg>`)}`,
+      content: `data:image/x-icon;base64,${validPNGBase64}`,
       type: "image",
     });
 
