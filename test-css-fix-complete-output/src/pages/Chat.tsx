@@ -1,1 +1,0 @@
-// Generated src/pages/Chat.tsx

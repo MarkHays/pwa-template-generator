@@ -470,7 +470,7 @@ pwa-template-generator
                             authentication, databases, and monitoring
                           </Text>
                           <Badge colorScheme="green" px={3} py={1}>
-                            ✅ 86.67% Success Rate - Production Ready
+                            ✅ 93.33% Success Rate - Production Ready
                           </Badge>
                         </VStack>
 

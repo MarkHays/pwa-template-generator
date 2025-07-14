@@ -1,14 +1,25 @@
-# PWA Template Generator - .gitignore
+# PWA Template Generator - Professional .gitignore
 
-# Dependencies
+# =============================================================================
+# NODE.JS & DEPENDENCIES
+# =============================================================================
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+.npm
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
 
-# Build outputs
+# =============================================================================
+# BUILD OUTPUTS & DISTRIBUTIONS
+# =============================================================================
 dist/
 build/
 .vite/
@@ -18,109 +29,45 @@ build/
 .parcel-cache/
 .vercel/
 .netlify/
+out/
+public/build/
+web-app/dist/
 
-# Environment variables
+# =============================================================================
+# ENVIRONMENT & CONFIGURATION
+# =============================================================================
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 .env.*.local
+.envrc
 
-# IDE and editor files
+# =============================================================================
+# IDE & EDITOR FILES
+# =============================================================================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
+*.sublime-*
 
-# OS generated files
+# =============================================================================
+# OPERATING SYSTEM FILES
+# =============================================================================
+# macOS
 .DS_Store
 .DS_Store?
 ._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Firebase
-.firebase/
-firebase-debug.log*
-firebase-debug.*.log*
-.firebaserc.backup
-
-# Testing
-coverage/
-.nyc_output/
-*.lcov
-test-results/
-playwright-report/
-
-# Temporary files
-*.tmp
-*.temp
-.tmp/
-.temp/
-
-# Logs
-logs/
-*.log
-
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env.test
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# yarn v2
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
-
-# Generated files
-generated/
-*.generated.*
-
-# Backup files
-*.backup
-*.bak
-*.orig
-
-# MacOS
 .AppleDouble
 .LSOverride
+.Spotlight-V100
+.Trashes
 
 # Windows
 [Dd]esktop.ini
@@ -131,21 +78,207 @@ $RECYCLE_BIN/
 *.msm
 *.msp
 *.lnk
+ehthumbs.db
+Thumbs.db
 
 # Linux
-*~
 .fuse_hidden*
 .directory
 .Trash-*
 .nfs*
 
-# Project specific
-templates/generated/
+# =============================================================================
+# FIREBASE & DEPLOYMENT
+# =============================================================================
+.firebase/
+firebase-debug.log*
+firebase-debug.*.log*
+.firebaserc.backup
+
+# =============================================================================
+# TESTING & COVERAGE
+# =============================================================================
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+playwright-report/
+.coverage/
+
+# =============================================================================
+# TEST FILES & DIRECTORIES (PROJECT SPECIFIC)
+# =============================================================================
+# Test script files
+test-*.js
+test-*.cjs
+test-*.mjs
+test-*.ts
+*-test.js
+*-test.cjs
+*-test.mjs
+*-test.ts
+
+# Exception: Keep main CI/CD test file
+!test-phase2-simple.cjs
+
+# Test output directories
+test-*/
+*-test-*/
+*-output/
+test-*-output/
+*-test-output/
+
+# Debug files
+debug-*.js
+debug-*.cjs
+debug-*.mjs
+debug-web-*.js
+debug-web-*.cjs
+debug-feature-*.js
+debug-feature-*.cjs
+
+# =============================================================================
+# REPORTS & DOCUMENTATION (TEMPORARY)
+# =============================================================================
+# Status and completion reports
+*-STATUS*.md
+*-COMPLETION*.md
+*-REPORT*.md
+*-SUMMARY*.md
+*-FIX*.md
+*-FIXES*.md
+
+# Specific report patterns
+PHASE*-COMPLETION-STATUS.md
+PHASE*-FRONTEND-UPDATE-SUMMARY.md
+BUILD-FIX-REPORT.md
+CSS-FIX-*.md
+CRITICAL-CSS-*.md
+COMPREHENSIVE-FIXES-*.md
+CORE-ISSUES-*.md
+DEPLOYMENT-*.md
+ENHANCED-VALIDATION-*.md
+ERROR-FREE-*.md
+FINAL-*.md
+MOBILE-*.md
+PRODUCTION-READY-*.md
+PWA-GENERATION-*.md
+RICH-CONTENT-*.md
+ROADMAP-COMPLETION-*.md
+SERVICE-WORKER-FIX-*.md
+VALIDATION-SYSTEM-*.md
+ZERO-MANUAL-*.md
+
+# =============================================================================
+# JSON REPORTS & DATA FILES
+# =============================================================================
+*-report.json
+*-test-report.json
+feature-test-report.json
+phase*-test-report.json
+actual-generator-test-report.json
+navigation-fix-test-report.json
+deployment-manifest.json
+
+# =============================================================================
+# BACKUP & TEMPORARY FILES
+# =============================================================================
+*.backup
+*.bak
+*.orig
+*.tmp
+*.temp
+.tmp/
+.temp/
+backup-*/
+*-backup/
+*.draft.md
+
+# =============================================================================
+# GENERATED & OUTPUT FILES
+# =============================================================================
+generated/
+*.generated.*
 downloads/
 temp/
+templates/generated/
 
-# Test files
-test-generator.cjs
+# Specific generated scripts
+build-for-production.cjs
+deploy-*.cjs
+setup-*.cjs
+start-*.cjs
+regenerate-*.js
+fix-*.cjs
+verify-*.js
+verify-*.sh
 
-# Documentation drafts
-*.draft.md
+# =============================================================================
+# LOGS & RUNTIME DATA
+# =============================================================================
+logs/
+*.log
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# =============================================================================
+# CACHE FILES
+# =============================================================================
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+.eslintcache
+.stylelintcache
+
+# =============================================================================
+# MISCELLANEOUS
+# =============================================================================
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Temporary demo files
+demo-*.js
+dropboxPhotos.js
+
+# Shell scripts (deployment/setup)
+deploy.sh
+deploy-to-production.sh
+create-github-repo.sh
+verify-build.sh
+
+# Setup and verification markdown
+setup-*.md
+verify-*.md
+
+# =============================================================================
+# ALLOW IMPORTANT FILES (EXCEPTIONS)
+# =============================================================================
+# Keep important documentation
+!README.md
+!ROADMAP.md
+!LICENSE
+!DEPLOYMENT-GUIDE.md
+!TROUBLESHOOTING.md
+
+# Keep important configuration
+!package.json
+!package-lock.json
+!tsconfig*.json
+!vite.config.*
+!firebase.json
+!.firebaserc
+
+# Keep source code
+!src/
+!templates/
+!scripts/
+!web-app/src/
