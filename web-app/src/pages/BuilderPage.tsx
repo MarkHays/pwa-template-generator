@@ -53,6 +53,7 @@ import BusinessInfoStep from "../components/builder/BusinessInfoStep";
 import AIRecommendationsStep from "../components/builder/AIRecommendationsStep";
 import FrameworkSelectionStep from "../components/builder/FrameworkSelectionStep";
 import FeaturesSelectionStep from "../components/builder/FeaturesSelectionStep";
+import EnterpriseConfigStep from "../components/builder/EnterpriseConfigStep";
 import CustomizationStep from "../components/builder/CustomizationStep";
 import DeploymentStep from "../components/builder/DeploymentStep";
 import ReviewStep from "../components/builder/ReviewStep";
@@ -78,6 +79,7 @@ const BuilderPage: React.FC = () => {
     aiRecommendations,
     selectedFramework,
     selectedFeatures,
+    enterpriseConfig,
     customization,
     deployment,
     isGenerating,
@@ -119,6 +121,17 @@ const BuilderPage: React.FC = () => {
       icon: FiSettings,
       component: FeaturesSelectionStep,
       isComplete: selectedFeatures.length > 0,
+    },
+    {
+      title: "Enterprise",
+      description: "Configure enterprise features",
+      icon: FiShield,
+      component: EnterpriseConfigStep,
+      isComplete:
+        !enterpriseConfig.enabled ||
+        (enterpriseConfig.enabled &&
+          (enterpriseConfig.authProviders.length > 0 ||
+            Boolean(enterpriseConfig.database))),
     },
     {
       title: "Customize",
@@ -166,7 +179,7 @@ const BuilderPage: React.FC = () => {
 
   const handleStepClick = (stepIndex: number) => {
     // Allow navigation to completed steps or next step
-    if (stepIndex <= currentStep || steps[stepIndex - 1]?.isComplete) {
+    if (stepIndex <= currentStep + 1) {
       setCurrentStep(stepIndex);
     }
   };
@@ -193,11 +206,45 @@ const BuilderPage: React.FC = () => {
 
   const CurrentStepComponent = steps[currentStep]?.component;
   const isLastStep = currentStep === steps.length - 1;
-  const canProceed = steps[currentStep]?.isComplete || currentStep === 0;
+
+  // More intelligent step completion logic
+  const getCurrentStepCompletion = () => {
+    switch (currentStep) {
+      case 0: // Business Info
+        return (
+          !!businessInfo.businessName &&
+          !!businessInfo.industry &&
+          !!businessInfo.description
+        );
+      case 1: // AI Analysis
+        return !!aiRecommendations?.analysis;
+      case 2: // Framework
+        return !!selectedFramework;
+      case 3: // Features
+        return selectedFeatures.length > 0;
+      case 4: // Enterprise
+        return (
+          !enterpriseConfig.enabled ||
+          (enterpriseConfig.enabled &&
+            (enterpriseConfig.authProviders.length > 0 ||
+              Boolean(enterpriseConfig.database)))
+        );
+      case 5: // Customize
+        return !!customization.colorScheme;
+      case 6: // Deployment
+        return deployment.platforms.length > 0;
+      case 7: // Review
+        return true; // Review step is always "complete"
+      default:
+        return false;
+    }
+  };
+
+  const canProceed = getCurrentStepCompletion();
 
   return (
-    <Box minH="100vh" bgGradient={bgGradient}>
-      <Container maxW="7xl" py={8}>
+    <Box minH="100vh" bgGradient={bgGradient} overflow="hidden">
+      <Container maxW="7xl" py={8} overflow="hidden">
         <VStack spacing={8} align="stretch">
           {/* Header */}
           <MotionBox
@@ -205,13 +252,25 @@ const BuilderPage: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Card bg={cardBg} shadow="lg">
+            <Card bg={cardBg} shadow="lg" overflow="hidden">
               <CardHeader>
-                <Flex justify="space-between" align="center">
-                  <VStack align="start" spacing={1}>
-                    <Heading size="lg">PWA Builder</Heading>
-                    <Text color="gray.600">
+                <Flex
+                  direction={{ base: "column", md: "row" }}
+                  justify={{ base: "center", md: "space-between" }}
+                  align={{ base: "center", md: "center" }}
+                  gap={{ base: 4, md: 0 }}
+                >
+                  <VStack align={{ base: "center", md: "start" }} spacing={1}>
+                    <Heading size={{ base: "md", md: "lg" }}>
+                      PWA Builder
+                    </Heading>
+                    <Text
+                      color="gray.600"
+                      fontSize={{ base: "sm", md: "md" }}
+                      textAlign={{ base: "center", md: "left" }}
+                    >
                       Create your enterprise PWA with AI-powered intelligence
+                      and Phase 2 features
                     </Text>
                   </VStack>
                   <HStack spacing={3}>
@@ -220,6 +279,7 @@ const BuilderPage: React.FC = () => {
                       px={3}
                       py={1}
                       borderRadius="full"
+                      fontSize={{ base: "xs", md: "sm" }}
                     >
                       Step {currentStep + 1} of {steps.length}
                     </Badge>
@@ -244,8 +304,8 @@ const BuilderPage: React.FC = () => {
             transition={{ duration: 0.6, delay: 0.1 }}
           >
             <Card bg={cardBg} shadow="lg" overflow="hidden">
-              <CardBody py={{ base: 4, md: 6 }} px={{ base: 4, md: 6 }}>
-                <VStack spacing={{ base: 4, md: 6 }}>
+              <CardBody py={{ base: 3, md: 6 }} px={{ base: 3, md: 6 }}>
+                <VStack spacing={{ base: 3, md: 6 }}>
                   <Box w="full">
                     <Text
                       fontSize="xs"
@@ -258,7 +318,7 @@ const BuilderPage: React.FC = () => {
                     </Text>
                     <Progress
                       value={(currentStep / (steps.length - 1)) * 100}
-                      size="lg"
+                      size={{ base: "md", md: "lg" }}
                       colorScheme="blue"
                       w="full"
                       borderRadius="full"
@@ -279,7 +339,7 @@ const BuilderPage: React.FC = () => {
                       w="full"
                       orientation="horizontal"
                       size={{ base: "sm", md: "md" }}
-                      gap={{ base: 1, md: 2 }}
+                      gap={{ base: 0, md: 2 }}
                     >
                       {steps.map((step, index) => (
                         <Step key={index} flex="1">
@@ -297,10 +357,10 @@ const BuilderPage: React.FC = () => {
                           </StepIndicator>
 
                           <Box
-                            ml={{ base: 1, md: 2 }}
+                            ml={{ base: 0, md: 2 }}
                             minW={0}
                             overflow="hidden"
-                            display={{ base: "none", md: "block" }}
+                            display={{ base: "none", lg: "block" }}
                           >
                             <StepTitle
                               fontSize={{ base: "xs", md: "sm" }}
@@ -311,7 +371,7 @@ const BuilderPage: React.FC = () => {
                             <StepDescription
                               fontSize="xs"
                               noOfLines={1}
-                              display={{ base: "none", lg: "block" }}
+                              display={{ base: "none", xl: "block" }}
                             >
                               {step.description}
                             </StepDescription>
@@ -325,7 +385,7 @@ const BuilderPage: React.FC = () => {
 
                   {/* Mobile Step Info */}
                   <Box
-                    display={{ base: "block", md: "none" }}
+                    display={{ base: "block", lg: "none" }}
                     textAlign="center"
                     p={3}
                     bg="blue.50"
@@ -335,7 +395,7 @@ const BuilderPage: React.FC = () => {
                     <Text fontSize="sm" fontWeight="medium" color="blue.800">
                       {steps[currentStep]?.title}
                     </Text>
-                    <Text fontSize="xs" color="blue.600">
+                    <Text fontSize="xs" color="blue.600" mt={1}>
                       {steps[currentStep]?.description}
                     </Text>
                   </Box>
@@ -403,26 +463,36 @@ const BuilderPage: React.FC = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               mt={6}
             >
-              <Card bg={cardBg} shadow="lg">
-                <CardBody>
-                  <Flex justify="space-between" align="center">
+              <Card bg={cardBg} shadow="lg" overflow="hidden">
+                <CardBody py={{ base: 4, md: 6 }} px={{ base: 4, md: 6 }}>
+                  <Flex
+                    direction={{ base: "column", md: "row" }}
+                    justify="space-between"
+                    align="center"
+                    gap={{ base: 4, md: 0 }}
+                  >
                     <Button
                       leftIcon={<FiArrowLeft />}
                       onClick={handlePrevious}
                       isDisabled={currentStep === 0 || isGenerating}
                       variant="outline"
-                      size="lg"
+                      size={{ base: "md", md: "lg" }}
+                      w={{ base: "full", md: "auto" }}
                     >
                       Previous
                     </Button>
 
-                    <VStack spacing={2}>
-                      <Text fontSize="sm" color="gray.600">
+                    <VStack spacing={2} order={{ base: -1, md: 0 }}>
+                      <Text fontSize="sm" color="gray.600" textAlign="center">
                         {currentStep + 1} of {steps.length} steps
                       </Text>
-                      {!canProceed && currentStep > 0 && (
-                        <Text fontSize="xs" color="orange.500">
-                          Complete this step to continue
+                      {!canProceed && (
+                        <Text
+                          fontSize="xs"
+                          color="orange.500"
+                          textAlign="center"
+                        >
+                          Please complete required fields to continue
                         </Text>
                       )}
                     </VStack>
@@ -431,11 +501,12 @@ const BuilderPage: React.FC = () => {
                       <Button
                         rightIcon={<FiDownload />}
                         onClick={handleGenerate}
-                        isDisabled={!canProceed || isGenerating}
+                        isDisabled={isGenerating}
                         isLoading={isGenerating}
                         loadingText="Generating..."
                         colorScheme="green"
-                        size="lg"
+                        size={{ base: "md", md: "lg" }}
+                        w={{ base: "full", md: "auto" }}
                       >
                         Generate PWA
                       </Button>
@@ -445,9 +516,10 @@ const BuilderPage: React.FC = () => {
                         onClick={handleNext}
                         isDisabled={!canProceed || isGenerating}
                         colorScheme="blue"
-                        size="lg"
+                        size={{ base: "md", md: "lg" }}
+                        w={{ base: "full", md: "auto" }}
                       >
-                        Next Step
+                        Continue
                       </Button>
                     )}
                   </Flex>
@@ -456,76 +528,74 @@ const BuilderPage: React.FC = () => {
             </MotionBox>
           </Box>
 
-          {/* AI Insights Sidebar (if recommendations available) */}
+          {/* AI Insights - Moved to top of content area */}
           {aiRecommendations?.analysis && (
             <MotionCard
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              bg={cardBg}
-              shadow="lg"
-              position="fixed"
-              right={4}
-              top="50%"
-              transform="translateY(-50%)"
-              w="300px"
-              zIndex={10}
-              display={{ base: "none", xl: "block" }}
+              bg="blue.50"
+              borderColor="blue.200"
+              borderWidth="1px"
+              shadow="sm"
+              mb={6}
+              overflow="hidden"
             >
-              <CardHeader>
-                <HStack spacing={2}>
-                  <Icon as={FiStar} color="yellow.500" />
-                  <Heading size="md">AI Insights</Heading>
+              <CardHeader pb={3}>
+                <HStack spacing={2} justify="space-between">
+                  <HStack spacing={2}>
+                    <Icon as={FiStar} color="blue.500" />
+                    <Heading size="sm" color="blue.800">
+                      AI Insights
+                    </Heading>
+                  </HStack>
+                  <Badge colorScheme="blue" size="sm">
+                    Smart Recommendations
+                  </Badge>
                 </HStack>
               </CardHeader>
               <CardBody pt={0}>
-                <VStack spacing={4} align="start">
-                  <Box>
-                    <Text fontSize="sm" fontWeight="medium" mb={1}>
-                      Recommended Framework
+                <HStack spacing={6} wrap="wrap">
+                  <VStack align="start" spacing={1}>
+                    <Text fontSize="xs" fontWeight="medium" color="blue.700">
+                      Framework
                     </Text>
-                    <Badge colorScheme="blue">
+                    <Badge colorScheme="blue" size="sm">
                       {aiRecommendations?.recommendations?.framework}
                     </Badge>
-                  </Box>
+                  </VStack>
 
-                  <Box>
-                    <Text fontSize="sm" fontWeight="medium" mb={1}>
-                      Performance Target
+                  <VStack align="start" spacing={1}>
+                    <Text fontSize="xs" fontWeight="medium" color="blue.700">
+                      Performance
                     </Text>
-                    <HStack spacing={2}>
-                      <Icon as={FiTrendingUp} color="green.500" boxSize={4} />
-                      <Text fontSize="sm">95+ Lighthouse Score</Text>
+                    <HStack spacing={1}>
+                      <Icon as={FiTrendingUp} color="green.500" boxSize={3} />
+                      <Text fontSize="xs">95+ Score</Text>
                     </HStack>
-                  </Box>
+                  </VStack>
 
-                  <Box>
-                    <Text fontSize="sm" fontWeight="medium" mb={1}>
-                      Security Features
+                  <VStack align="start" spacing={1}>
+                    <Text fontSize="xs" fontWeight="medium" color="blue.700">
+                      Security
                     </Text>
-                    <HStack spacing={2}>
-                      <Icon as={FiShield} color="orange.500" boxSize={4} />
-                      <Text fontSize="sm">Enterprise Security</Text>
+                    <HStack spacing={1}>
+                      <Icon as={FiShield} color="orange.500" boxSize={3} />
+                      <Text fontSize="xs">Enterprise</Text>
                     </HStack>
-                  </Box>
+                  </VStack>
 
                   {aiRecommendations?.insights?.recommendations && (
-                    <Box>
-                      <Text fontSize="sm" fontWeight="medium" mb={2}>
-                        Key Recommendations
+                    <VStack align="start" spacing={1} flex={1} minW="200px">
+                      <Text fontSize="xs" fontWeight="medium" color="blue.700">
+                        Key Recommendation
                       </Text>
-                      <VStack spacing={1} align="start">
-                        {aiRecommendations?.insights?.recommendations
-                          ?.slice(0, 3)
-                          .map((rec: string, index: number) => (
-                            <Text key={index} fontSize="xs" color="gray.600">
-                              • {rec}
-                            </Text>
-                          ))}
-                      </VStack>
-                    </Box>
+                      <Text fontSize="xs" color="blue.600">
+                        • {aiRecommendations?.insights?.recommendations[0]}
+                      </Text>
+                    </VStack>
                   )}
-                </VStack>
+                </HStack>
               </CardBody>
             </MotionCard>
           )}

@@ -20,7 +20,15 @@ import {
   Link as ChakraLink,
 } from "@chakra-ui/react";
 import { Link, useLocation } from "react-router-dom";
-import { FiMenu, FiCode, FiZap, FiBook, FiInfo, FiHome } from "react-icons/fi";
+import {
+  FiMenu,
+  FiCode,
+  FiZap,
+  FiBook,
+  FiInfo,
+  FiHome,
+  FiShield,
+} from "react-icons/fi";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -40,6 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: "Builder", path: "/builder", icon: FiCode },
     { name: "About", path: "/about", icon: FiInfo },
     { name: "Docs", path: "/docs", icon: FiBook },
+    { name: "Admin", path: "/admin", icon: FiShield },
   ];
 
   const isActive = (path: string) => {
@@ -59,24 +68,32 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         zIndex={10}
         shadow="sm"
       >
-        <Container maxW="7xl">
-          <Flex h={16} alignItems="center" justifyContent="space-between">
+        <Container maxW="7xl" px={{ base: 4, md: 6 }}>
+          <Flex
+            h={{ base: 14, md: 16 }}
+            alignItems="center"
+            justifyContent="space-between"
+          >
             {/* Logo */}
             <Link to="/">
-              <HStack spacing={3} cursor="pointer">
+              <HStack spacing={{ base: 2, md: 3 }} cursor="pointer">
                 <Box
-                  w={10}
-                  h={10}
+                  w={{ base: 8, md: 10 }}
+                  h={{ base: 8, md: 10 }}
                   bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
                   borderRadius="lg"
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
                 >
-                  <FiZap color="white" size={20} />
+                  <FiZap color="white" size={18} />
                 </Box>
-                <VStack spacing={0} align="start">
-                  <Heading size="sm" color="gray.800">
+                <VStack
+                  spacing={0}
+                  align="start"
+                  display={{ base: "none", sm: "flex" }}
+                >
+                  <Heading size={{ base: "xs", md: "sm" }} color="gray.800">
                     PWA Generator
                   </Heading>
                   <Text fontSize="xs" color={textColor}>
@@ -87,7 +104,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Link>
 
             {/* Desktop Navigation */}
-            <HStack spacing={8} display={{ base: "none", md: "flex" }}>
+            <HStack
+              spacing={{ base: 4, md: 8 }}
+              display={{ base: "none", lg: "flex" }}
+            >
               {navItems.map((item) => (
                 <ChakraLink
                   key={item.path}

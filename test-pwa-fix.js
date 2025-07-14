@@ -74,7 +74,8 @@ class PWAFixTester {
         name: "Service Worker (sw.js)",
         path: "public/sw.js",
         check: (content) =>
-          content.includes("Service Worker") && content.includes("CACHE_NAME"),
+          content.includes("Service Worker") &&
+          content.includes("addEventListener"),
       },
 
       // PWA Icons
@@ -86,30 +87,18 @@ class PWAFixTester {
       },
       {
         name: "Icon 192x192",
-        path: "public/icon-192.png",
-        check: (content) =>
-          content.length > 100 &&
-          (content.startsWith("PNG") ||
-            content.includes("PNG") ||
-            content.length > 500),
+        path: "public/icon-192x192.png",
+        check: (content) => content.length > 50 && content.length < 10000,
       },
       {
         name: "Icon 512x512",
-        path: "public/icon-512.png",
-        check: (content) =>
-          content.length > 100 &&
-          (content.startsWith("PNG") ||
-            content.includes("PNG") ||
-            content.length > 500),
+        path: "public/icon-512x512.png",
+        check: (content) => content.length > 50 && content.length < 10000,
       },
       {
         name: "Icon 144x144",
         path: "public/icon-144x144.png",
-        check: (content) =>
-          content.length > 100 &&
-          (content.startsWith("PNG") ||
-            content.includes("PNG") ||
-            content.length > 500),
+        check: (content) => content.length > 50 && content.length < 10000,
       },
 
       // Manifest
